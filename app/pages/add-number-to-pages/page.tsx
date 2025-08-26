@@ -28,20 +28,39 @@ import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
 
-export default function AddPageNumbers() {
-  const [file, setFile] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState("");
-  const [error, setError] = useState("");
-  const [position, setPosition] = useState("bottom-center");
-  const [startPage, setStartPage] = useState(1);
-  const [pageFormat, setPageFormat] = useState("page_of_total");
-  const [startNumber, setStartNumber] = useState(1);
-  const fileInputRef = useRef(null);
+// 1. Define types for the component's state and props
+type PageNumberPosition =
+  | "top-left"
+  | "top-center"
+  | "top-right"
+  | "bottom-left"
+  | "bottom-center"
+  | "bottom-right";
 
-  const handleFileSelect = (event) => {
+type PageFormat = "page_only" | "page_of_total";
+
+// Note: In this component, there are no props, but this is how you would define them.
+// interface AddPageNumbersProps {}
+
+export default function AddPageNumbers() {
+  // Use File | null for the file state
+  const [file, setFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [downloadUrl, setDownloadUrl] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  // Use the defined union types for position and format
+  const [position, setPosition] = useState<PageNumberPosition>("bottom-center");
+  const [startPage, setStartPage] = useState<number>(1);
+  const [pageFormat, setPageFormat] = useState<PageFormat>("page_of_total");
+  const [startNumber, setStartNumber] = useState<number>(1);
+
+  // 2. Type the useRef hook to an HTMLInputElement
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 3. Type the event handler for file selection
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     setError("");
-    const selectedFile = event.target.files[0];
+    const selectedFile = event.target.files?.[0];
 
     if (selectedFile && selectedFile.type === "application/pdf") {
       setFile(selectedFile);
@@ -51,7 +70,8 @@ export default function AddPageNumbers() {
     }
   };
 
-  const handleDrop = (event) => {
+  // 4. Type the event handlers for drag and drop
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setError("");
     const droppedFiles = Array.from(event.dataTransfer.files);
@@ -65,7 +85,7 @@ export default function AddPageNumbers() {
     }
   };
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
   };
 
@@ -82,6 +102,7 @@ export default function AddPageNumbers() {
     try {
       const formData = new FormData();
       formData.append("pdf", file);
+      // Ensure all values are converted to string for FormData
       formData.append("position", position);
       formData.append("startPage", startPage.toString());
       formData.append("pageFormat", pageFormat);
@@ -108,7 +129,11 @@ export default function AddPageNumbers() {
       setDownloadUrl(url);
     } catch (error) {
       console.error("Error adding page numbers:", error);
-      setError(error.message || "Failed to process PDF. Please try again.");
+      // Type the error object as Error
+      const typedError = error as Error;
+      setError(
+        typedError.message || "Failed to process PDF. Please try again."
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -216,7 +241,10 @@ export default function AddPageNumbers() {
                     Position
                   </Label>
                   <Select
-                    onValueChange={setPosition}
+                    // The onValueChange handler is typed by the Select component
+                    onValueChange={(value: PageNumberPosition) =>
+                      setPosition(value)
+                    }
                     defaultValue="bottom-center"
                   >
                     <SelectTrigger className="w-full">
@@ -248,7 +276,10 @@ export default function AddPageNumbers() {
                       id="start-page"
                       type="number"
                       value={startPage}
-                      onChange={(e) => setStartPage(Number(e.target.value))}
+                      // Type the event from the onChange handler
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setStartPage(Number(e.target.value))
+                      }
                       min="1"
                     />
                   </div>
@@ -263,7 +294,10 @@ export default function AddPageNumbers() {
                       id="start-number"
                       type="number"
                       value={startNumber}
-                      onChange={(e) => setStartNumber(Number(e.target.value))}
+                      // Type the event from the onChange handler
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setStartNumber(Number(e.target.value))
+                      }
                       min="1"
                     />
                   </div>
@@ -275,7 +309,8 @@ export default function AddPageNumbers() {
                     Format
                   </Label>
                   <RadioGroup
-                    onValueChange={setPageFormat}
+                    // The onValueChange handler is typed by the RadioGroup component
+                    onValueChange={(value: PageFormat) => setPageFormat(value)}
                     defaultValue="page_of_total"
                   >
                     <div className="flex items-center space-x-2 p-3 border rounded-lg">

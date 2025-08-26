@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import type { ChangeEvent, DragEvent, FormEvent } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -25,17 +26,17 @@ import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
 
 export default function PdfToImagesPage() {
-  const [file, setFile] = useState(null);
-  const [message, setMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState("");
-  const fileInputRef = useRef(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [message, setMessage] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [dragActive, setDragActive] = useState<boolean>(false);
+  const [downloadUrl, setDownloadUrl] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     setMessage("");
     setDownloadUrl("");
-    const selectedFile = e.target.files[0];
+    const selectedFile = e.target.files?.[0];
     if (selectedFile && selectedFile.type === "application/pdf") {
       setFile(selectedFile);
     } else {
@@ -44,32 +45,32 @@ export default function PdfToImagesPage() {
     }
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
     setMessage("");
     setDownloadUrl("");
-    const droppedFiles = Array.from(event.dataTransfer.files);
+    const droppedFile = event.dataTransfer.files[0];
 
-    if (droppedFiles.length > 0 && droppedFiles[0].type === "application/pdf") {
-      setFile(droppedFiles[0]);
+    if (droppedFile && droppedFile.type === "application/pdf") {
+      setFile(droppedFile);
     } else {
       setMessage("Please drop a valid PDF file.");
       setFile(null);
     }
   };
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(true);
   };
 
-  const handleDragLeave = (event) => {
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!file) {
       setMessage("Please select a file first.");
@@ -208,7 +209,9 @@ export default function PdfToImagesPage() {
               <Separator />
               <div className="flex justify-center">
                 <Button
-                  onClick={handleSubmit}
+                  onClick={(e) =>
+                    handleSubmit(e as unknown as FormEvent<HTMLFormElement>)
+                  }
                   disabled={isLoading}
                   variant={"outline"}
                   className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase"
@@ -257,7 +260,7 @@ export default function PdfToImagesPage() {
               >
                 <a
                   href={downloadUrl}
-                  download={`converted-${file.name.replace(
+                  download={`converted-${file?.name.replace(
                     ".pdf",
                     "-images.zip"
                   )}`}

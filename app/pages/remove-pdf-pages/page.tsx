@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import type { ChangeEvent, DragEvent, FormEvent } from "react";
 import axios from "axios";
 import { cn } from "@/lib/utils";
 import {
@@ -27,18 +28,18 @@ import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
 
 export default function PDFRemover() {
-  const [file, setFile] = useState(null);
-  const [pagesToRemove, setPagesToRemove] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [downloadUrl, setDownloadUrl] = useState("");
-  const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [pagesToRemove, setPagesToRemove] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [downloadUrl, setDownloadUrl] = useState<string>("");
+  const [dragActive, setDragActive] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = (event) => {
+  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
     setError("");
     setDownloadUrl("");
-    const selectedFile = event.target.files[0];
+    const selectedFile = event.target.files?.[0];
     if (selectedFile && selectedFile.type === "application/pdf") {
       setFile(selectedFile);
     } else {
@@ -47,7 +48,7 @@ export default function PDFRemover() {
     }
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
     setError("");
@@ -61,17 +62,17 @@ export default function PDFRemover() {
     }
   };
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(true);
   };
 
-  const handleDragLeave = (event) => {
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setError("");
     setDownloadUrl("");
@@ -97,7 +98,7 @@ export default function PDFRemover() {
 
       const url = window.URL.createObjectURL(new Blob([res.data]));
       setDownloadUrl(url);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       const errorMessage =
         err.response && err.response.data
@@ -220,14 +221,16 @@ export default function PDFRemover() {
                   type="text"
                   id="pagesToRemove"
                   value={pagesToRemove}
-                  onChange={(e) => setPagesToRemove(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setPagesToRemove(e.target.value)
+                  }
                   className="text-center"
                   placeholder="e.g., 1, 3-5, 8"
                 />
               </div>
               <div className="flex justify-center pt-2">
                 <Button
-                  onClick={handleSubmit}
+                  onClick={handleSubmit as any}
                   disabled={!file || !pagesToRemove || loading}
                   variant={"outline"}
                   className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase"
@@ -270,7 +273,7 @@ export default function PDFRemover() {
               >
                 <a
                   href={downloadUrl}
-                  download={`modified-${file.name}`}
+                  download={`modified-${file?.name}`}
                   className="text-sm font-semibold uppercase text-green-700 flex items-center"
                 >
                   <DownloadIcon className="mr-2 h-4 w-4" />

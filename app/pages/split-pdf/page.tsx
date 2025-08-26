@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,17 +21,17 @@ import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
 
 export default function SplitPDF() {
-  const [file, setFile] = useState(null);
-  const [ranges, setRanges] = useState([""]);
-  const [isSplitting, setIsSplitting] = useState(false);
-  const [downloadUrls, setDownloadUrls] = useState([]);
-  const [error, setError] = useState("");
-  const fileInputRef = useRef(null);
-  const [pageCount, setPageCount] = useState(0);
+  const [file, setFile] = useState<File | null>(null);
+  const [ranges, setRanges] = useState<string[]>([""]);
+  const [isSplitting, setIsSplitting] = useState<boolean>(false);
+  const [downloadUrls, setDownloadUrls] = useState<string[]>([]);
+  const [error, setError] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pageCount, setPageCount] = useState<number>(0);
 
-  const handleFileSelect = (event) => {
+  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
     setError("");
-    const selectedFile = event.target.files[0];
+    const selectedFile = event.target.files?.[0];
 
     if (selectedFile && selectedFile.type === "application/pdf") {
       setFile(selectedFile);
@@ -38,21 +39,25 @@ export default function SplitPDF() {
       setDownloadUrls([]);
       const reader = new FileReader();
       reader.onload = function (e) {
-        const pdfData = new Uint8Array(e.target.result);
-        const match = /\/Count\s+(\d+)/.exec(new TextDecoder().decode(pdfData));
-        if (match) {
-          setPageCount(parseInt(match[1], 10));
-        } else {
-          setPageCount(0);
+        if (e.target?.result) {
+          const pdfData = new Uint8Array(e.target.result as ArrayBuffer);
+          const pdfString = new TextDecoder().decode(pdfData);
+          const match = /\/Count\s+(\d+)/.exec(pdfString);
+          if (match) {
+            setPageCount(parseInt(match[1], 10));
+          } else {
+            setPageCount(0);
+          }
         }
       };
       reader.readAsArrayBuffer(selectedFile);
     } else {
       setError("Please select a valid PDF file");
+      setFile(null);
     }
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setError("");
     const droppedFiles = Array.from(event.dataTransfer.files);
@@ -62,10 +67,13 @@ export default function SplitPDF() {
       setRanges([""]);
       setDownloadUrls([]);
       event.dataTransfer.clearData();
+    } else {
+      setError("Please drop a valid PDF file");
+      setFile(null);
     }
   };
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
   };
 
@@ -73,7 +81,7 @@ export default function SplitPDF() {
     setRanges([...ranges, ""]);
   };
 
-  const removeRange = (index) => {
+  const removeRange = (index: number) => {
     if (ranges.length > 1) {
       const newRanges = [...ranges];
       newRanges.splice(index, 1);
@@ -81,7 +89,7 @@ export default function SplitPDF() {
     }
   };
 
-  const updateRange = (index, value) => {
+  const updateRange = (index: number, value: string) => {
     const newRanges = [...ranges];
     newRanges[index] = value;
     setRanges(newRanges);
@@ -121,7 +129,7 @@ export default function SplitPDF() {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setDownloadUrls([url]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error splitting PDF:", error);
       setError(error.message || "Failed to split PDF. Please try again.");
     } finally {
@@ -227,8 +235,7 @@ export default function SplitPDF() {
                   Page Ranges to Extract
                 </h3>
                 <p className="text-xs font-semibold uppercase my-2 text-zinc-600">
-                  Examples: &quot;1-5&quot;, &quot;8,10&quot;, &quot;15-&quot;
-                  or a combination
+                  Examples: "1-5", "8,10", "15-" or a combination
                 </p>
                 {ranges.map((range, index) => (
                   <div key={index} className="flex items-center gap-2 mt-2">

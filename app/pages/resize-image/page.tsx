@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,8 +35,14 @@ import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
 
+// Define a type for the pixelsData state
+interface PixelsData {
+  width: number;
+  height: number;
+}
+
 // Helper function to format file size
-const formatFileSize = (bytes) => {
+const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return "0 Bytes";
   const k = 1024;
   const sizes = ["Bytes", "KB", "MB", "GB"];
@@ -44,16 +51,21 @@ const formatFileSize = (bytes) => {
 };
 
 export default function ResizeImagePage() {
-  const [file, setFile] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState("");
-  const [error, setError] = useState("");
-  const [resizeMethod, setResizeMethod] = useState("pixels");
-  const [pixelsData, setPixelsData] = useState({ width: 800, height: 600 });
-  const [percentageData, setPercentageData] = useState(50);
-  const [outputFormat, setOutputFormat] = useState("png");
-  const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [downloadUrl, setDownloadUrl] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [resizeMethod, setResizeMethod] = useState<"pixels" | "percentage">(
+    "pixels"
+  );
+  const [pixelsData, setPixelsData] = useState<PixelsData>({
+    width: 800,
+    height: 600,
+  });
+  const [percentageData, setPercentageData] = useState<number>(50);
+  const [outputFormat, setOutputFormat] = useState<string>("png");
+  const [dragActive, setDragActive] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const originalSize = file ? file.size : 0;
 
   // Reset values when method changes
@@ -69,10 +81,10 @@ export default function ResizeImagePage() {
     };
   }, [downloadUrl]);
 
-  const handleFileChange = (event) => {
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     setError("");
     setDownloadUrl("");
-    const selectedFile = event.target.files[0];
+    const selectedFile = event.target.files?.[0];
     if (selectedFile && selectedFile.type.startsWith("image/")) {
       setFile(selectedFile);
     } else {
@@ -81,15 +93,15 @@ export default function ResizeImagePage() {
     }
   };
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(true);
   };
-  const handleDragLeave = (event) => {
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
   };
-  const handleDrop = (event) => {
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
     const droppedFiles = Array.from(event.dataTransfer.files);
@@ -102,7 +114,7 @@ export default function ResizeImagePage() {
     }
   };
 
-  const handlePixelsChange = (e) => {
+  const handlePixelsChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPixelsData((prev) => ({
       ...prev,
@@ -162,7 +174,7 @@ export default function ResizeImagePage() {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error resizing image:", err);
       setError(err.message || "Failed to resize image. Please try again.");
     } finally {
@@ -282,7 +294,9 @@ export default function ResizeImagePage() {
                 </h2>
                 <RadioGroup
                   value={resizeMethod}
-                  onValueChange={setResizeMethod}
+                  onValueChange={(value: "pixels" | "percentage") =>
+                    setResizeMethod(value)
+                  }
                   className="flex space-x-4"
                 >
                   <div className="flex items-center space-x-2">
@@ -351,7 +365,7 @@ export default function ResizeImagePage() {
                       id="percentage"
                       name="percentage"
                       value={percentageData}
-                      onChange={(e) =>
+                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
                         setPercentageData(Number(e.target.value))
                       }
                       min="1"
@@ -368,7 +382,10 @@ export default function ResizeImagePage() {
                 >
                   Output Format
                 </Label>
-                <Select onValueChange={setOutputFormat} value={outputFormat}>
+                <Select
+                  onValueChange={(value: string) => setOutputFormat(value)}
+                  value={outputFormat}
+                >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Select Format" />
                   </SelectTrigger>
@@ -425,7 +442,7 @@ export default function ResizeImagePage() {
               >
                 <a
                   href={downloadUrl}
-                  download={`resized-${file.name
+                  download={`resized-${file?.name
                     .split(".")
                     .slice(0, -1)
                     .join(".")}.${outputFormat}`}

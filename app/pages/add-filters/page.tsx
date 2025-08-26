@@ -19,10 +19,11 @@ import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
 import Image from "next/image";
+import React from "react";
 
 export default function FilterImagePage() {
-  const [file, setFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState("");
   const [error, setError] = useState("");
@@ -32,11 +33,11 @@ export default function FilterImagePage() {
     saturate: 1,
   });
 
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setError("");
-    const selectedFile = e.target.files[0];
+    const selectedFile = e.target.files?.[0] || null;
     if (selectedFile && selectedFile.type.startsWith("image/")) {
       setFile(selectedFile);
       setPreviewUrl(URL.createObjectURL(selectedFile));
@@ -46,7 +47,7 @@ export default function FilterImagePage() {
     }
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: parseFloat(value) }));
   };
@@ -64,9 +65,9 @@ export default function FilterImagePage() {
     try {
       const formData = new FormData();
       formData.append("image", file);
-      formData.append("brightness", filters.brightness);
-      formData.append("contrast", filters.contrast);
-      formData.append("saturate", filters.saturate);
+      formData.append("brightness", filters.brightness.toString());
+      formData.append("contrast", filters.contrast.toString());
+      formData.append("saturate", filters.saturate.toString());
 
       const response = await fetch("/api/add-filters", {
         method: "POST",
@@ -81,7 +82,7 @@ export default function FilterImagePage() {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       setError(err.message || "Failed to apply filters.");
     } finally {
@@ -153,9 +154,12 @@ export default function FilterImagePage() {
                 : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500 border-dashed"
             )}
             onClick={() => fileInputRef.current?.click()}
-            onDrop={(e) => {
+            onDrop={(e: React.DragEvent<HTMLDivElement>) => {
               e.preventDefault();
-              handleFileChange({ target: { files: e.dataTransfer.files } });
+              handleFileChange({
+                target: { files: e.dataTransfer.files } as EventTarget &
+                  HTMLInputElement,
+              });
             }}
             onDragOver={(e) => e.preventDefault()}
           >

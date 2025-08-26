@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import type { ChangeEvent, DragEvent, FormEvent } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,19 +20,27 @@ import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
 
+// Define a type for the crop data object
+interface CropData {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export default function CropImagePage() {
-  const [file, setFile] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState("");
-  const [error, setError] = useState("");
-  const [cropData, setCropData] = useState({
+  const [file, setFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [downloadUrl, setDownloadUrl] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [cropData, setCropData] = useState<CropData>({
     x: 0,
     y: 0,
     width: 100,
     height: 100,
   });
-  const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef(null);
+  const [dragActive, setDragActive] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Clean up object URL to prevent memory leaks
   useEffect(() => {
@@ -40,9 +49,9 @@ export default function CropImagePage() {
     };
   }, [downloadUrl]);
 
-  const handleFileChange = (event) => {
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     setError("");
-    const selectedFile = event.target.files[0];
+    const selectedFile = event.target.files?.[0] || null;
     if (selectedFile && selectedFile.type.startsWith("image/")) {
       setFile(selectedFile);
       setDownloadUrl("");
@@ -51,17 +60,17 @@ export default function CropImagePage() {
     }
   };
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(true);
   };
 
-  const handleDragLeave = (event) => {
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
     const droppedFiles = Array.from(event.dataTransfer.files);
@@ -73,7 +82,7 @@ export default function CropImagePage() {
     }
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     const numberValue = Math.max(0, Number(value)); // prevent negative
     setCropData((prev) => ({ ...prev, [name]: numberValue }));
@@ -97,10 +106,10 @@ export default function CropImagePage() {
     try {
       const formData = new FormData();
       formData.append("image", file);
-      formData.append("x", cropData.x);
-      formData.append("y", cropData.y);
-      formData.append("width", cropData.width);
-      formData.append("height", cropData.height);
+      formData.append("x", cropData.x.toString());
+      formData.append("y", cropData.y.toString());
+      formData.append("width", cropData.width.toString());
+      formData.append("height", cropData.height.toString());
 
       const response = await fetch("/api/crop-image", {
         method: "POST",
@@ -121,9 +130,9 @@ export default function CropImagePage() {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
-    } catch (error) {
-      console.error("Error cropping image:", error);
-      setError(error.message || "Failed to crop image. Please try again.");
+    } catch (err: any) {
+      console.error("Error cropping image:", err);
+      setError(err.message || "Failed to crop image. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -240,7 +249,7 @@ export default function CropImagePage() {
                         type="number"
                         id={field}
                         name={field}
-                        value={cropData[field]}
+                        value={cropData[field as keyof CropData]}
                         onChange={handleChange}
                         min={0}
                       />
@@ -292,7 +301,7 @@ export default function CropImagePage() {
               >
                 <a
                   href={downloadUrl}
-                  download={`cropped-${file.name}`}
+                  download={`cropped-${file?.name}`}
                   className="text-sm font-semibold uppercase"
                 >
                   Download Cropped Image

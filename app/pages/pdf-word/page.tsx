@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import type { ChangeEvent, DragEvent, FormEvent } from "react";
 import { cn } from "@/lib/utils";
 import {
   Breadcrumb,
@@ -25,7 +26,7 @@ import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
 
 // Helper function to format file size
-const formatFileSize = (bytes) => {
+const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return "0 Bytes";
   const k = 1024;
   const sizes = ["Bytes", "KB", "MB", "GB"];
@@ -34,18 +35,18 @@ const formatFileSize = (bytes) => {
 };
 
 export default function PDFToImagesConverter() {
-  const [file, setFile] = useState(null);
-  const [isConverting, setIsConverting] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState("");
-  const [error, setError] = useState("");
-  const [originalSize, setOriginalSize] = useState(0);
-  const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [isConverting, setIsConverting] = useState<boolean>(false);
+  const [downloadUrl, setDownloadUrl] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [originalSize, setOriginalSize] = useState<number>(0);
+  const [dragActive, setDragActive] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = (event) => {
+  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
     setError("");
     setDownloadUrl("");
-    const selectedFile = event.target.files[0];
+    const selectedFile = event.target.files?.[0];
 
     if (selectedFile && selectedFile.type === "application/pdf") {
       setFile(selectedFile);
@@ -56,16 +57,16 @@ export default function PDFToImagesConverter() {
     }
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
     setError("");
     setDownloadUrl("");
-    const droppedFiles = Array.from(event.dataTransfer.files);
+    const droppedFile = event.dataTransfer.files[0];
 
-    if (droppedFiles.length > 0 && droppedFiles[0].type === "application/pdf") {
-      setFile(droppedFiles[0]);
-      setOriginalSize(droppedFiles[0].size);
+    if (droppedFile && droppedFile.type === "application/pdf") {
+      setFile(droppedFile);
+      setOriginalSize(droppedFile.size);
       event.dataTransfer.clearData();
     } else {
       setFile(null);
@@ -73,17 +74,17 @@ export default function PDFToImagesConverter() {
     }
   };
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(true);
   };
 
-  const handleDragLeave = (event) => {
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLButtonElement>) => {
     e.preventDefault();
     if (!file) {
       setError("Please select a PDF file first.");
@@ -117,7 +118,7 @@ export default function PDFToImagesConverter() {
         }
         throw new Error(errorMessage);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error converting PDF:", err);
       setError(err.message || "Failed to convert PDF. Please try again.");
     } finally {
@@ -228,7 +229,7 @@ export default function PDFToImagesConverter() {
               <Separator />
               <div className="flex justify-center">
                 <Button
-                  onClick={handleSubmit}
+                  onClick={handleSubmit as any}
                   disabled={isConverting}
                   variant={"outline"}
                   className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase"
@@ -271,7 +272,7 @@ export default function PDFToImagesConverter() {
               >
                 <a
                   href={downloadUrl}
-                  download={`converted-${file.name.replace(
+                  download={`converted-${file?.name.replace(
                     ".pdf",
                     "-images.zip"
                   )}`}

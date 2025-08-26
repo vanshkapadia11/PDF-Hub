@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,13 +26,13 @@ import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
 
 export default function ConvertImagePage() {
-  const [file, setFile] = useState(null);
-  const [outputFormat, setOutputFormat] = useState("png");
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState("");
-  const [error, setError] = useState("");
-  const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [outputFormat, setOutputFormat] = useState<string>("png");
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [downloadUrl, setDownloadUrl] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [dragActive, setDragActive] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Clean up object URL
   useEffect(() => {
@@ -40,9 +41,10 @@ export default function ConvertImagePage() {
     };
   }, [downloadUrl]);
 
-  const handleFileChange = (event) => {
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     setError("");
-    const selectedFile = event.target.files[0];
+    const selectedFile = event.target.files?.[0] || null;
+
     if (
       selectedFile &&
       [
@@ -61,20 +63,21 @@ export default function ConvertImagePage() {
     }
   };
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(true);
   };
 
-  const handleDragLeave = (event) => {
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
     const droppedFiles = Array.from(event.dataTransfer.files);
+
     if (
       droppedFiles.length > 0 &&
       [
@@ -127,12 +130,20 @@ export default function ConvertImagePage() {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
-    } catch (error) {
-      console.error("Error converting image:", error);
-      setError(error.message || "Failed to convert image. Please try again.");
+    } catch (err: any) {
+      console.error("Error converting image:", err);
+      setError(err.message || "Failed to convert image. Please try again.");
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const getDownloadFilename = (): string => {
+    if (!file) return `converted-image.${outputFormat}`;
+    const nameParts = file.name.split(".");
+    const baseName =
+      nameParts.length > 1 ? nameParts.slice(0, -1).join(".") : file.name;
+    return `converted-${baseName}.${outputFormat}`;
   };
 
   return (
@@ -233,7 +244,10 @@ export default function ConvertImagePage() {
                 <h2 className="text-lg font-semibold uppercase text-gray-700">
                   Output Format
                 </h2>
-                <Select onValueChange={setOutputFormat} value={outputFormat}>
+                <Select
+                  onValueChange={(value) => setOutputFormat(value)}
+                  value={outputFormat}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select format" />
                   </SelectTrigger>
@@ -289,9 +303,7 @@ export default function ConvertImagePage() {
               >
                 <a
                   href={downloadUrl}
-                  download={`converted-${
-                    file.name.split(".")[0]
-                  }.${outputFormat}`}
+                  download={getDownloadFilename()}
                   className="text-sm font-semibold uppercase"
                 >
                   Download Converted Image

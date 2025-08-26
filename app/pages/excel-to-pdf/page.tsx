@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import type { ChangeEvent, DragEvent, FormEvent } from "react";
 import axios from "axios";
 import { cn } from "@/lib/utils";
 import {
@@ -19,14 +20,14 @@ import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
 
 export default function ExcelToPdf() {
-  const [file, setFile] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [downloadUrl, setDownloadUrl] = useState("");
-  const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [downloadUrl, setDownloadUrl] = useState<string>("");
+  const [dragActive, setDragActive] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
     setDownloadUrl("");
@@ -55,8 +56,8 @@ export default function ExcelToPdf() {
     }
   };
 
-  const handleFileSelect = (event) => {
-    const selectedFile = event.target.files[0];
+  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0] || null;
     if (
       selectedFile &&
       (selectedFile.type === "application/vnd.ms-excel" ||
@@ -71,10 +72,10 @@ export default function ExcelToPdf() {
     }
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
-    const droppedFile = event.dataTransfer.files[0];
+    const droppedFile = event.dataTransfer.files?.[0] || null;
     if (
       droppedFile &&
       (droppedFile.type === "application/vnd.ms-excel" ||
@@ -89,12 +90,12 @@ export default function ExcelToPdf() {
     }
   };
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(true);
   };
 
-  const handleDragLeave = (event) => {
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
   };

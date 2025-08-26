@@ -18,21 +18,22 @@ import { Separator } from "@/components/ui/separator";
 import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
+import React from "react";
 
 export default function CompressImagePage() {
-  const [file, setFile] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState("");
-  const [error, setError] = useState("");
-  const [mode, setMode] = useState("percentage");
-  const [quality, setQuality] = useState(80);
-  const [targetSize, setTargetSize] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [downloadUrl, setDownloadUrl] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [mode, setMode] = useState<"percentage" | "filesize">("percentage");
+  const [quality, setQuality] = useState<number>(80);
+  const [targetSize, setTargetSize] = useState<string>("");
 
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (event) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setError("");
-    const selectedFile = event.target.files[0];
+    const selectedFile = event.target.files?.[0] || null;
     if (selectedFile && selectedFile.type.startsWith("image/")) {
       setFile(selectedFile);
       setDownloadUrl("");
@@ -41,9 +42,11 @@ export default function CompressImagePage() {
     }
   };
 
-  const handleDragOver = (event) => event.preventDefault();
-  const handleDrop = (event) => {
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) =>
     event.preventDefault();
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setError("");
     const droppedFiles = Array.from(event.dataTransfer.files);
     if (droppedFiles.length > 0 && droppedFiles[0].type.startsWith("image/")) {
       setFile(droppedFiles[0]);
@@ -67,8 +70,12 @@ export default function CompressImagePage() {
       const formData = new FormData();
       formData.append("image", file);
       formData.append("mode", mode);
-      if (mode === "percentage") formData.append("quality", quality);
-      if (mode === "filesize") formData.append("targetSize", targetSize);
+      if (mode === "percentage") {
+        formData.append("quality", quality.toString());
+      }
+      if (mode === "filesize") {
+        formData.append("targetSize", targetSize);
+      }
 
       const response = await fetch("/api/compress-image", {
         method: "POST",
@@ -83,9 +90,9 @@ export default function CompressImagePage() {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
-    } catch (error) {
-      console.error("Error compressing image:", error);
-      setError(error.message || "Failed to compress image. Please try again.");
+    } catch (err: any) {
+      console.error("Error compressing image:", err);
+      setError(err.message || "Failed to compress image. Please try again.");
     } finally {
       setIsProcessing(false);
     }

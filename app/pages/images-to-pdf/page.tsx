@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import type { ChangeEvent, DragEvent, FormEvent } from "react";
 import { cn } from "@/lib/utils";
 import {
   Breadcrumb,
@@ -22,15 +23,15 @@ import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
 
 export default function ImagesToPDFConverter() {
-  const [files, setFiles] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [downloadUrl, setDownloadUrl] = useState("");
-  const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [downloadUrl, setDownloadUrl] = useState<string>("");
+  const [dragActive, setDragActive] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files || []);
     const validImageFiles = selectedFiles.filter((file) =>
       file.type.startsWith("image/")
     );
@@ -42,7 +43,7 @@ export default function ImagesToPDFConverter() {
     }
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
     const droppedFiles = Array.from(event.dataTransfer.files);
@@ -61,17 +62,17 @@ export default function ImagesToPDFConverter() {
     }
   };
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(true);
   };
 
-  const handleDragLeave = (event) => {
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (files.length === 0) {
       setError("Please select at least one image file.");
@@ -108,7 +109,7 @@ export default function ImagesToPDFConverter() {
     }
   };
 
-  const removeFile = (fileToRemove) => {
+  const removeFile = (fileToRemove: File) => {
     setFiles(files.filter((file) => file !== fileToRemove));
   };
 

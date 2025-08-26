@@ -1,8 +1,7 @@
-// components/PdfToExcel.js
-
 "use client";
 
 import { useState, useRef } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -26,7 +25,7 @@ import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
 
 // Helper function to format file size
-const formatFileSize = (bytes) => {
+const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return "0 Bytes";
   const k = 1024;
   const sizes = ["Bytes", "KB", "MB", "GB"];
@@ -35,18 +34,18 @@ const formatFileSize = (bytes) => {
 };
 
 export default function PdfToExcel() {
-  const [file, setFile] = useState(null);
-  const [isConverting, setIsConverting] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState("");
-  const [error, setError] = useState("");
-  const [originalSize, setOriginalSize] = useState(0);
-  const [convertedSize, setConvertedSize] = useState(0);
-  const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [isConverting, setIsConverting] = useState<boolean>(false);
+  const [downloadUrl, setDownloadUrl] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [originalSize, setOriginalSize] = useState<number>(0);
+  const [convertedSize, setConvertedSize] = useState<number>(0);
+  const [dragActive, setDragActive] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = (event) => {
+  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
     setError("");
-    const selectedFile = event.target.files[0];
+    const selectedFile = event.target.files?.[0];
     if (selectedFile && selectedFile.type === "application/pdf") {
       setFile(selectedFile);
       setOriginalSize(selectedFile.size);
@@ -58,14 +57,14 @@ export default function PdfToExcel() {
     }
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
     setError("");
-    const droppedFiles = Array.from(event.dataTransfer.files);
-    if (droppedFiles.length > 0 && droppedFiles[0].type === "application/pdf") {
-      setFile(droppedFiles[0]);
-      setOriginalSize(droppedFiles[0].size);
+    const droppedFile = event.dataTransfer.files[0];
+    if (droppedFile && droppedFile.type === "application/pdf") {
+      setFile(droppedFile);
+      setOriginalSize(droppedFile.size);
       setConvertedSize(0);
       setDownloadUrl("");
       event.dataTransfer.clearData();
@@ -75,12 +74,12 @@ export default function PdfToExcel() {
     }
   };
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(true);
   };
 
-  const handleDragLeave = (event) => {
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
   };
@@ -120,7 +119,7 @@ export default function PdfToExcel() {
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
       setConvertedSize(blob.size);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error converting PDF to Excel:", error);
       setError(error.message || "Failed to convert PDF. Please try again.");
     } finally {
@@ -292,7 +291,7 @@ export default function PdfToExcel() {
               >
                 <a
                   href={downloadUrl}
-                  download={`converted-${file.name.replace(".pdf", ".xlsx")}`}
+                  download={`converted-${file?.name.replace(".pdf", ".xlsx")}`}
                   className="text-sm font-semibold uppercase text-green-700"
                 >
                   Download The Excel File

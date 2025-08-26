@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
+import type { ChangeEvent, DragEvent, FormEvent } from "react";
 import { cn } from "@/lib/utils";
 import {
   Breadcrumb,
@@ -25,6 +26,7 @@ import {
   useSensor,
   useSensors,
   PointerSensor,
+  DragEndEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -37,8 +39,14 @@ import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
 
-// Sortable Item Component
-const SortableItem = ({ file, index, removeFile }) => {
+// Sortable Item Component with explicit props type
+interface SortableItemProps {
+  file: File;
+  index: number;
+  removeFile: (index: number) => void;
+}
+
+const SortableItem = ({ file, index, removeFile }: SortableItemProps) => {
   const {
     attributes,
     listeners,
@@ -87,12 +95,12 @@ const SortableItem = ({ file, index, removeFile }) => {
 };
 
 export default function PDFMerger() {
-  const [files, setFiles] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [downloadUrl, setDownloadUrl] = useState("");
-  const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [downloadUrl, setDownloadUrl] = useState<string>("");
+  const [dragActive, setDragActive] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -102,8 +110,8 @@ export default function PDFMerger() {
     })
   );
 
-  const handleFileSelect = (event) => {
-    const newFiles = Array.from(event.target.files).filter(
+  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
+    const newFiles = Array.from(event.target.files || []).filter(
       (file) => file.type === "application/pdf"
     );
     if (newFiles.length > 0) {
@@ -114,7 +122,7 @@ export default function PDFMerger() {
     }
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
     const droppedFiles = Array.from(event.dataTransfer.files).filter(
@@ -128,37 +136,41 @@ export default function PDFMerger() {
     }
   };
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(true);
   };
 
-  const handleDragLeave = (event) => {
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
   };
 
-  const removeFile = (index) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+  const removeFile = (indexToRemove: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== indexToRemove));
     setError("");
   };
 
-  const handleDragEnd = (event) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (active.id !== over.id) {
+    if (active.id !== over?.id) {
       setFiles((prev) => {
-        const oldIndex = prev.findIndex(
-          (file) => file.name + prev.indexOf(file) === active.id
+        const activeIndex = prev.findIndex(
+          (file, index) => `${file.name}${index}` === active.id
         );
-        const newIndex = prev.findIndex(
-          (file) => file.name + prev.indexOf(file) === over.id
+        const overIndex = prev.findIndex(
+          (file, index) => `${file.name}${index}` === over?.id
         );
-        return arrayMove(prev, oldIndex, newIndex);
+        if (activeIndex !== -1 && overIndex !== -1) {
+          return arrayMove(prev, activeIndex, overIndex);
+        }
+        return prev;
       });
     }
   };
 
-  const mergePDFs = async () => {
+  const mergePDFs = async (e: FormEvent) => {
+    e.preventDefault();
     if (files.length < 2) {
       setError("Please select at least 2 PDF files to merge.");
       return;
@@ -191,7 +203,7 @@ export default function PDFMerger() {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error merging PDFs:", error);
       setError(error.message || "Failed to merge PDFs. Please try again.");
     } finally {
@@ -295,13 +307,13 @@ export default function PDFMerger() {
                   onDragEnd={handleDragEnd}
                 >
                   <SortableContext
-                    items={files.map((file, index) => file.name + index)}
+                    items={files.map((file, index) => `${file.name}${index}`)}
                     strategy={verticalListSortingStrategy}
                   >
                     <ul className="space-y-2 max-h-60 overflow-y-auto pr-2">
                       {files.map((file, index) => (
                         <SortableItem
-                          key={file.name + index}
+                          key={`${file.name}${index}`}
                           file={file}
                           index={index}
                           removeFile={removeFile}

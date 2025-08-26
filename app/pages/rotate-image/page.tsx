@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -34,15 +35,15 @@ import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
 
 export default function RotateFlipImagePage() {
-  const [file, setFile] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState("");
-  const [error, setError] = useState("");
-  const [rotate, setRotate] = useState("0");
-  const [flipH, setFlipH] = useState(false);
-  const [flipV, setFlipV] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [downloadUrl, setDownloadUrl] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [rotate, setRotate] = useState<string>("0");
+  const [flipH, setFlipH] = useState<boolean>(false);
+  const [flipV, setFlipV] = useState<boolean>(false);
+  const [dragActive, setDragActive] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     return () => {
@@ -50,10 +51,10 @@ export default function RotateFlipImagePage() {
     };
   }, [downloadUrl]);
 
-  const handleFileChange = (event) => {
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     setError("");
     setDownloadUrl("");
-    const selectedFile = event.target.files[0];
+    const selectedFile = event.target.files?.[0];
     if (selectedFile && selectedFile.type.startsWith("image/")) {
       setFile(selectedFile);
     } else {
@@ -62,15 +63,15 @@ export default function RotateFlipImagePage() {
     }
   };
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(true);
   };
-  const handleDragLeave = (event) => {
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
   };
-  const handleDrop = (event) => {
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
     const droppedFiles = Array.from(event.dataTransfer.files);
@@ -98,8 +99,8 @@ export default function RotateFlipImagePage() {
       const formData = new FormData();
       formData.append("image", file);
       formData.append("rotate", rotate);
-      formData.append("flipH", flipH);
-      formData.append("flipV", flipV);
+      formData.append("flipH", String(flipH));
+      formData.append("flipV", String(flipV));
 
       const response = await fetch("/api/rotate-image", {
         method: "POST",
@@ -120,7 +121,7 @@ export default function RotateFlipImagePage() {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error rotating/flipping image:", err);
       setError(err.message || "Failed to process image. Please try again.");
     } finally {
@@ -244,7 +245,10 @@ export default function RotateFlipImagePage() {
                     >
                       Rotate (degrees)
                     </Label>
-                    <Select onValueChange={setRotate} value={rotate}>
+                    <Select
+                      onValueChange={(value: string) => setRotate(value)}
+                      value={rotate}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -262,7 +266,9 @@ export default function RotateFlipImagePage() {
                       <Checkbox
                         id="flipH"
                         checked={flipH}
-                        onCheckedChange={setFlipH}
+                        onCheckedChange={(checked) =>
+                          setFlipH(Boolean(checked))
+                        }
                       />
                       <Label
                         htmlFor="flipH"
@@ -275,7 +281,9 @@ export default function RotateFlipImagePage() {
                       <Checkbox
                         id="flipV"
                         checked={flipV}
-                        onCheckedChange={setFlipV}
+                        onCheckedChange={(checked) =>
+                          setFlipV(Boolean(checked))
+                        }
                       />
                       <Label
                         htmlFor="flipV"
@@ -333,7 +341,7 @@ export default function RotateFlipImagePage() {
               >
                 <a
                   href={downloadUrl}
-                  download={`modified-${file.name}`}
+                  download={`modified-${file?.name}`}
                   className="text-sm font-semibold uppercase text-green-700 flex items-center"
                 >
                   <DownloadIcon className="mr-2 h-4 w-4" />

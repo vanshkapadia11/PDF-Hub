@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -19,30 +20,41 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Loader2Icon, CheckCircle2Icon } from "lucide-react";
-
 import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
 
-export default function CompressPDF() {
-  const [file, setFile] = useState(null);
-  const [isCompressing, setIsCompressing] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState("");
-  const [error, setError] = useState("");
-  const [compressionType, setCompressionType] = useState("preset");
-  const [compressionLevel, setCompressionLevel] = useState("medium");
-  const [customQuality, setCustomQuality] = useState(75);
-  const [removeMetadata, setRemoveMetadata] = useState(true);
-  const [downsampleImages, setDownsampleImages] = useState(true);
-  const [targetSize, setTargetSize] = useState("");
-  const [originalSize, setOriginalSize] = useState(0);
-  const [compressedSize, setCompressedSize] = useState(0);
-  const [compressionDetails, setCompressionDetails] = useState(null);
-  const fileInputRef = useRef(null);
+// Define a type for the compression details object
+interface CompressionDetails {
+  originalSize: number;
+  compressedSize: number;
+  reduction: number;
+}
 
-  const handleFileSelect = (event) => {
+export default function CompressPDF() {
+  const [file, setFile] = useState<File | null>(null);
+  const [isCompressing, setIsCompressing] = useState<boolean>(false);
+  const [downloadUrl, setDownloadUrl] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [compressionType, setCompressionType] = useState<
+    "preset" | "custom" | "target"
+  >("preset");
+  const [compressionLevel, setCompressionLevel] = useState<
+    "low" | "medium" | "high" | "maximum"
+  >("medium");
+  const [customQuality, setCustomQuality] = useState<number>(75);
+  const [removeMetadata, setRemoveMetadata] = useState<boolean>(true);
+  const [downsampleImages, setDownsampleImages] = useState<boolean>(true);
+  const [targetSize, setTargetSize] = useState<string>("");
+  const [originalSize, setOriginalSize] = useState<number>(0);
+  const [compressedSize, setCompressedSize] = useState<number>(0);
+  const [compressionDetails, setCompressionDetails] =
+    useState<CompressionDetails | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
     setError("");
-    const selectedFile = event.target.files[0];
+    const selectedFile = event.target.files?.[0] || null;
 
     if (selectedFile && selectedFile.type === "application/pdf") {
       setFile(selectedFile);
@@ -55,7 +67,7 @@ export default function CompressPDF() {
     }
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setError("");
     const droppedFiles = Array.from(event.dataTransfer.files);
@@ -72,16 +84,16 @@ export default function CompressPDF() {
     }
   };
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
   };
 
-  const formatFileSize = (bytes) => {
+  const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
   };
 
   const compressPDF = async () => {
@@ -131,9 +143,9 @@ export default function CompressPDF() {
         compressedSize: blob.size,
         reduction: Math.round(((file.size - blob.size) / file.size) * 100),
       });
-    } catch (error) {
-      console.error("Error compressing PDF:", error);
-      setError(error.message || "Failed to compress PDF. Please try again.");
+    } catch (err: any) {
+      console.error("Error compressing PDF:", err);
+      setError(err.message || "Failed to compress PDF. Please try again.");
     } finally {
       setIsCompressing(false);
     }
@@ -240,7 +252,9 @@ export default function CompressPDF() {
               <Tabs
                 defaultValue="preset"
                 className="w-full"
-                onValueChange={setCompressionType}
+                onValueChange={(value) =>
+                  setCompressionType(value as "preset" | "custom" | "target")
+                }
               >
                 <TabsList className="grid w-full grid-cols-3 mb-6">
                   <TabsTrigger
@@ -269,7 +283,11 @@ export default function CompressPDF() {
                   </h3>
                   <RadioGroup
                     defaultValue="medium"
-                    onValueChange={setCompressionLevel}
+                    onValueChange={(value) =>
+                      setCompressionLevel(
+                        value as "low" | "medium" | "high" | "maximum"
+                      )
+                    }
                   >
                     <div className="flex items-center space-x-2 p-4 border rounded-lg">
                       <RadioGroupItem value="low" id="r1" />
@@ -317,7 +335,9 @@ export default function CompressPDF() {
                     </Label>
                     <Slider
                       value={[customQuality]}
-                      onValueChange={(value) => setCustomQuality(value[0])}
+                      onValueChange={(value: number[]) =>
+                        setCustomQuality(value[0])
+                      }
                       max={100}
                       step={1}
                       className="w-full accent-rose-500"
@@ -338,7 +358,9 @@ export default function CompressPDF() {
                     <Switch
                       id="metadata"
                       checked={removeMetadata}
-                      onCheckedChange={setRemoveMetadata}
+                      onCheckedChange={(checked: boolean) =>
+                        setRemoveMetadata(checked)
+                      }
                     />
                   </div>
 
@@ -352,7 +374,9 @@ export default function CompressPDF() {
                     <Switch
                       id="downsample"
                       checked={downsampleImages}
-                      onCheckedChange={setDownsampleImages}
+                      onCheckedChange={(checked: boolean) =>
+                        setDownsampleImages(checked)
+                      }
                     />
                   </div>
                 </TabsContent>
@@ -365,7 +389,9 @@ export default function CompressPDF() {
                     type="number"
                     placeholder="Enter target size in MB"
                     value={targetSize}
-                    onChange={(e) => setTargetSize(e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setTargetSize(e.target.value)
+                    }
                     className="w-full text-sm font-semibold uppercase"
                     min="0.1"
                     step="0.1"
@@ -444,7 +470,7 @@ export default function CompressPDF() {
                 >
                   <a
                     href={downloadUrl}
-                    download={`compressed-${file.name}`}
+                    download={`compressed-${file?.name}`}
                     className="text-sm font-semibold uppercase"
                   >
                     Download Compressed PDF

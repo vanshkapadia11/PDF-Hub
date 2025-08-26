@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import type { ChangeEvent, DragEvent, FormEvent } from "react";
 import axios from "axios";
 import { cn } from "@/lib/utils";
 import {
@@ -25,6 +26,7 @@ import {
   useSensor,
   useSensors,
   PointerSensor,
+  DragEndEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -38,8 +40,20 @@ import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
 import Image from "next/image";
 
+// Define a type for a single PDF page
+interface PDFPage {
+  id: string;
+  pageNumber: number;
+  preview: string | null;
+}
+
 // Component for a single draggable page
-function SortablePage({ page, removePage }) {
+interface SortablePageProps {
+  page: PDFPage;
+  removePage: (id: string) => void;
+}
+
+function SortablePage({ page, removePage }: SortablePageProps) {
   const { id, pageNumber, preview } = page;
   const {
     attributes,
@@ -89,6 +103,8 @@ function SortablePage({ page, removePage }) {
           src={preview}
           alt={`Page ${pageNumber} preview`}
           className="w-full h-full object-cover pointer-events-none"
+          width={160}
+          height={224}
         />
       ) : (
         <div className="flex items-center justify-center w-full h-full bg-gray-100">
@@ -105,15 +121,15 @@ function SortablePage({ page, removePage }) {
 }
 
 export default function PDFOrganizer() {
-  const [file, setFile] = useState(null);
-  const [pages, setPages] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [downloadUrl, setDownloadUrl] = useState("");
-  const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef(null);
-  const [pdfjs, setPdfjs] = useState(null);
-  const [isPdfjsLoaded, setIsPdfjsLoaded] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [pages, setPages] = useState<PDFPage[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [downloadUrl, setDownloadUrl] = useState<string>("");
+  const [dragActive, setDragActive] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pdfjs, setPdfjs] = useState<any>(null);
+  const [isPdfjsLoaded, setIsPdfjsLoaded] = useState<boolean>(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -126,8 +142,9 @@ export default function PDFOrganizer() {
   useEffect(() => {
     const loadPdfjs = async () => {
       try {
-        const pdfjsLib = await import("pdfjs-dist");
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+        const pdfjsLib = await import("pdfjs-dist/build/pdf");
+        const pdfjsWorker = await import("pdfjs-dist/build/pdf.worker.entry");
+        pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
         setPdfjs(pdfjsLib);
         setIsPdfjsLoaded(true);
       } catch (error) {
@@ -138,8 +155,8 @@ export default function PDFOrganizer() {
     loadPdfjs();
   }, []);
 
-  const renderPagePreviews = async (pdfDoc) => {
-    const previewPromises = [];
+  const renderPagePreviews = async (pdfDoc: any) => {
+    const previewPromises: Promise<string | null>[] = [];
     const scale = 0.5;
 
     for (let i = 1; i <= pdfDoc.numPages; i++) {
@@ -150,6 +167,7 @@ export default function PDFOrganizer() {
             const viewport = page.getViewport({ scale });
             const canvas = document.createElement("canvas");
             const canvasContext = canvas.getContext("2d");
+            if (!canvasContext) return null;
             canvas.height = viewport.height;
             canvas.width = viewport.width;
             await page.render({ canvasContext, viewport }).promise;
@@ -164,8 +182,8 @@ export default function PDFOrganizer() {
     return Promise.all(previewPromises);
   };
 
-  const handleFileSelect = async (event) => {
-    const selectedFile = event.target.files[0];
+  const handleFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
     if (selectedFile && selectedFile.type === "application/pdf") {
       setFile(selectedFile);
       setError("");
@@ -183,21 +201,20 @@ export default function PDFOrganizer() {
         const numPages = pdf.numPages;
 
         const previews = await renderPagePreviews(pdf);
-        const initialPages = previews.map((preview, i) => ({
+        const initialPages: PDFPage[] = previews.map((preview, i) => ({
           id: `${i + 1}-${selectedFile.name}`,
           pageNumber: i + 1,
           preview: preview,
         }));
 
         setPages(initialPages);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error processing PDF:", error);
         setError(
           "Could not process PDF completely. The page previews may not be available, but you can still reorder based on page numbers."
         );
         // Fallback to a simple page list if preview fails
-        const numPages = Math.max(1, Math.floor(selectedFile.size / 50000));
-        const initialPages = Array.from({ length: numPages }, (_, i) => ({
+        const initialPages: PDFPage[] = Array.from({ length: 1 }, (_, i) => ({
           id: `${i + 1}-${selectedFile.name}`,
           pageNumber: i + 1,
           preview: null,
@@ -213,18 +230,19 @@ export default function PDFOrganizer() {
     }
   };
 
-  const handleDragEnd = (event) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
       setPages((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
+        if (oldIndex === -1 || newIndex === -1) return items;
         return arrayMove(items, oldIndex, newIndex);
       });
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
     setDownloadUrl("");
@@ -254,7 +272,7 @@ export default function PDFOrganizer() {
 
       const url = window.URL.createObjectURL(new Blob([res.data]));
       setDownloadUrl(url);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       setError(
         err.response?.data?.error ||
@@ -265,24 +283,26 @@ export default function PDFOrganizer() {
     }
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
     const droppedFile = event.dataTransfer.files[0];
     if (droppedFile && droppedFile.type === "application/pdf") {
-      handleFileSelect({ target: { files: [droppedFile] } });
+      handleFileSelect({
+        target: { files: [droppedFile] },
+      } as ChangeEvent<HTMLInputElement>);
     } else {
       setFile(null);
       setError("Please drop a valid PDF file.");
     }
   };
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(true);
   };
 
-  const handleDragLeave = (event) => {
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
   };
@@ -297,7 +317,7 @@ export default function PDFOrganizer() {
     }
   };
 
-  const removePage = (idToRemove) => {
+  const removePage = (idToRemove: string) => {
     setPages((prevPages) => prevPages.filter((page) => page.id !== idToRemove));
     setError("");
     setDownloadUrl("");
