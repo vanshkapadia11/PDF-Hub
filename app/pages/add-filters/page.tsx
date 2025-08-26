@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Loader2Icon } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -90,33 +91,48 @@ export default function FilterImagePage() {
   return (
     <>
       <Navbar />
-      <div className="grid md:grid-cols-[6fr_1fr] grid-rows-[1fr_1fr] md:min-h-screen min-h-[150vh] bg-gray-50 p-4">
-        <div className="flex flex-col items-center justify-center text-center">
-          <div className="mb-10 w-full max-w-2xl mx-auto text-left">
+
+      {/* Full-screen Loader Overlay */}
+      {isProcessing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center">
+            <Loader2Icon className="h-12 w-12 animate-spin text-rose-400" />
+            <p className="mt-4 text-sm font-semibold uppercase text-gray-700">
+              Applying filters, please wait...
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Main content container. Using flexbox for better vertical stacking and spacing. */}
+      <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
+        {/* Main content area */}
+        <main className="flex-1 p-4 md:p-8 flex flex-col items-center text-center">
+          <div className="w-full max-w-2xl mx-auto text-left">
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <a href="/" className="text-sm font-semibold uppercase">
+                  <BreadcrumbLink href="/">
+                    <span className="text-sm font-semibold uppercase cursor-pointer">
                       Home
-                    </a>
+                    </span>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
                   <BreadcrumbPage className="text-sm font-semibold uppercase">
-                    Filters
+                    Add Filters
                   </BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
 
-          <h1 className="text-4xl font-semibold uppercase">
+          <h1 className="text-4xl font-extrabold uppercase mt-6">
             PDF Hub - Add Filters
           </h1>
           <p className="text-xs font-semibold uppercase mt-2 mb-8 text-zinc-600">
-            Adjust brightness, contrast, and saturation with live preview.
+            Adjust brightness, contrast, and saturation.
           </p>
 
           <input
@@ -126,12 +142,14 @@ export default function FilterImagePage() {
             onChange={handleFileChange}
             className="hidden"
           />
+
+          {/* Drag & Drop Zone */}
           <div
             className={cn(
-              "w-full max-w-2xl h-48 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer",
+              "w-full max-w-2xl h-48 border-2 rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
               file
                 ? "border-green-500 text-green-500"
-                : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500"
+                : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500 border-dashed"
             )}
             onClick={() => fileInputRef.current?.click()}
             onDrop={(e) => {
@@ -143,89 +161,118 @@ export default function FilterImagePage() {
             <p className="text-sm font-semibold uppercase">
               Click to select or drag & drop an image here
             </p>
+            {file && (
+              <p className="mt-2 text-sm font-medium">
+                Selected: <span className="font-bold">{file.name}</span>
+              </p>
+            )}
           </div>
 
+          {/* Main Controls and Preview Section */}
           {file && (
-            <div className="w-full max-w-2xl text-sm font-semibold uppercase mt-6 p-4 rounded-lg bg-white shadow-sm text-left border border-green-200">
-              Selected File: <span className="text-red-400">{file.name}</span>
-            </div>
-          )}
-
-          {file && (
-            <div className="w-full max-w-2xl mt-6 p-4 rounded-lg bg-white shadow-sm text-left border border-gray-200 space-y-4">
-              <h2 className="text-lg font-semibold uppercase">Filters</h2>
-              {["brightness", "contrast", "saturate"].map((filter) => (
-                <div key={filter} className="flex items-center space-x-2">
-                  <Label className="text-sm font-semibold uppercase">
-                    {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                  </Label>
-                  <Input
-                    type="range"
-                    name={filter}
-                    min="0"
-                    max="2"
-                    step="0.01"
-                    value={filters[filter]}
-                    onChange={handleChange}
-                    className="flex-1 accent-zinc-800" // Add this class
-                  />
-                  <span className="text-sm font-semibold uppercase">
-                    {filters[filter]}
-                  </span>
+            <div className="w-full max-w-2xl mt-8 p-6 rounded-xl bg-white shadow-lg border border-gray-200 space-y-6">
+              <div className="grid md:grid-cols-2 gap-6 items-start">
+                {/* Filters Controls */}
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold uppercase text-gray-700">
+                    Filters
+                  </h2>
+                  {["brightness", "contrast", "saturate"].map((filter) => (
+                    <div key={filter} className="space-y-2">
+                      <Label className="text-sm font-semibold uppercase flex justify-between">
+                        <span>
+                          {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                        </span>
+                        <span>{filters[filter].toFixed(2)}</span>
+                      </Label>
+                      <Input
+                        type="range"
+                        name={filter}
+                        min="0"
+                        max="2"
+                        step="0.01"
+                        value={filters[filter]}
+                        onChange={handleChange}
+                        className="w-full accent-rose-500 cursor-pointer"
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
 
-              {/* Live Preview */}
-              {previewUrl && (
-                <div className="mt-4 flex justify-center">
-                  <img
-                    src={previewUrl}
-                    alt="preview"
-                    className="max-w-full max-h-96 border rounded-lg shadow"
-                    style={{
-                      filter: `brightness(${filters.brightness}) contrast(${filters.contrast}) saturate(${filters.saturate})`,
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-
-          {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-
-          {file && (
-            <Button
-              onClick={processImage}
-              disabled={isProcessing}
-              className="bg-blue-700 text-white hover:bg-blue-800 text-sm font-semibold uppercase mt-8 mb-4 cursor-pointer"
-            >
-              {isProcessing ? "Applying Filters..." : "Apply Filters"}
-            </Button>
-          )}
-
-          {downloadUrl && (
-            <>
-              <Separator />
-              <div className="mt-6 text-center w-6/12">
-                <div className="w-full max-w-2xl mt-6 p-6 rounded-lg bg-white shadow-sm text-center ring-2 ring-inset ring-[#e8e8e8]">
-                  <h3 className="text-lg font-semibold uppercase mb-4 text-green-700">
-                    Success!
-                  </h3>
-                  <Button className="w-full bg-green-700 text-white hover:bg-green-800">
-                    <a
-                      href={downloadUrl}
-                      download={`filtered-${file.name}`}
-                      className="font-semibold text-sm uppercase w-full"
-                    >
-                      Download Filtered Image
-                    </a>
-                  </Button>
+                {/* Live Preview */}
+                <div className="flex flex-col items-center justify-center">
+                  <h2 className="text-xl font-semibold uppercase text-gray-700 mb-4">
+                    Live Preview
+                  </h2>
+                  {previewUrl && (
+                    <div className="w-full max-w-[300px] aspect-square rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center border shadow-inner">
+                      <img
+                        src={previewUrl}
+                        alt="Live preview of filtered image"
+                        className="max-w-full max-h-full object-contain"
+                        style={{
+                          filter: `brightness(${filters.brightness}) contrast(${filters.contrast}) saturate(${filters.saturate})`,
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
-            </>
+
+              <Separator />
+
+              {/* Action and Download Buttons */}
+              <div className="flex flex-col items-center">
+                {error && (
+                  <p className="mt-4 text-sm font-semibold uppercase text-red-600">
+                    {error}
+                  </p>
+                )}
+
+                {downloadUrl ? (
+                  <div className="w-full text-center p-4 rounded-lg bg-green-50 border border-green-300">
+                    <h3 className="text-lg font-semibold uppercase mb-4 text-green-700">
+                      Success!
+                    </h3>
+                    <Button
+                      variant={"outline"}
+                      className="ring-2 ring-inset ring-green-500"
+                    >
+                      <a
+                        href={downloadUrl}
+                        download={`filtered-${file.name}`}
+                        className="font-semibold text-sm uppercase text-green-700"
+                      >
+                        Download Filtered Image
+                      </a>
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    onClick={processImage}
+                    disabled={isProcessing}
+                    className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase mt-4"
+                    variant={"outline"}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                        Applying Filters...
+                      </>
+                    ) : (
+                      "Apply Filters"
+                    )}
+                  </Button>
+                )}
+              </div>
+            </div>
           )}
-        </div>
-        <MoreToolsSidebar currentPage="/add-filters" />
+        </main>
+
+        {/* Sidebar Container */}
+        <aside className="md:w-[25%] p-4 bg-gray-100 border-l border-gray-200">
+          <MoreToolsSidebar currentPage={"/add-filters"} />
+        </aside>
       </div>
       <Footer />
     </>

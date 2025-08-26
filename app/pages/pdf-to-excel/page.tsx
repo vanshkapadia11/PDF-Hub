@@ -12,9 +12,25 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  FileIcon,
+  CheckCircle2Icon,
+  Loader2Icon,
+  CloudUploadIcon,
+  XCircleIcon,
+} from "lucide-react";
 import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
+
+// Helper function to format file size
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+};
 
 export default function PdfToExcel() {
   const [file, setFile] = useState(null);
@@ -23,27 +39,28 @@ export default function PdfToExcel() {
   const [error, setError] = useState("");
   const [originalSize, setOriginalSize] = useState(0);
   const [convertedSize, setConvertedSize] = useState(0);
+  const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleFileSelect = (event) => {
     setError("");
     const selectedFile = event.target.files[0];
-
     if (selectedFile && selectedFile.type === "application/pdf") {
       setFile(selectedFile);
       setOriginalSize(selectedFile.size);
       setConvertedSize(0);
       setDownloadUrl("");
     } else {
-      setError("Please select a valid PDF file");
+      setError("Please select a valid PDF file.");
+      setFile(null);
     }
   };
 
   const handleDrop = (event) => {
     event.preventDefault();
+    setDragActive(false);
     setError("");
     const droppedFiles = Array.from(event.dataTransfer.files);
-
     if (droppedFiles.length > 0 && droppedFiles[0].type === "application/pdf") {
       setFile(droppedFiles[0]);
       setOriginalSize(droppedFiles[0].size);
@@ -51,25 +68,24 @@ export default function PdfToExcel() {
       setDownloadUrl("");
       event.dataTransfer.clearData();
     } else {
-      setError("Please drop a valid PDF file");
+      setError("Please drop a valid PDF file.");
+      setFile(null);
     }
   };
 
   const handleDragOver = (event) => {
     event.preventDefault();
+    setDragActive(true);
   };
 
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  const handleDragLeave = (event) => {
+    event.preventDefault();
+    setDragActive(false);
   };
 
   const convertToExcel = async () => {
     if (!file) {
-      setError("Please select a PDF file first");
+      setError("Please select a PDF file first.");
       return;
     }
 
@@ -110,22 +126,34 @@ export default function PdfToExcel() {
     }
   };
 
+  const removeFile = () => {
+    setFile(null);
+    setOriginalSize(0);
+    setConvertedSize(0);
+    setDownloadUrl("");
+    setError("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <>
       <Navbar />
-      <div className="grid md:grid-cols-[6fr_1fr] grid-rows-[1fr_1fr] md:min-h-screen min-h-[150vh] bg-gray-50 p-4">
-        <div className="flex flex-col items-center justify-center text-center">
+
+      {/* Main Content & Sidebar Container */}
+      <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
+        {/* Main Content Area */}
+        <main className="flex-1 p-4 md:p-8 flex flex-col items-center text-center">
           {/* Breadcrumb */}
-          <div className="mb-10 w-full max-w-2xl mx-auto text-left">
+          <div className="w-full max-w-2xl mx-auto text-left">
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <a href="/">
-                      <span className="text-sm font-semibold uppercase cursor-pointer">
-                        Home
-                      </span>
-                    </a>
+                  <BreadcrumbLink href="/">
+                    <span className="text-sm font-semibold uppercase cursor-pointer">
+                      Home
+                    </span>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
@@ -139,14 +167,13 @@ export default function PdfToExcel() {
           </div>
 
           {/* Header */}
-          <h1 className="text-4xl font-semibold uppercase">
+          <h1 className="text-4xl font-extrabold uppercase mt-6">
             PDF Hub - Convert PDF to Excel
           </h1>
           <p className="text-xs font-semibold uppercase mt-2 mb-8 text-zinc-600">
-            Convert your PDF documents to editable Excel spreadsheets
+            Convert your PDF documents to editable Excel spreadsheets.
           </p>
 
-          {/* File Input (hidden) */}
           <input
             type="file"
             ref={fileInputRef}
@@ -155,105 +182,128 @@ export default function PdfToExcel() {
             className="hidden"
           />
 
-          {/* Drop Zone */}
-          <div
-            className={cn(
-              "w-full max-w-2xl h-48 border-2 border-dashed rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
-              file
-                ? "border-green-500 text-green-500"
-                : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500"
-            )}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <p className="text-sm font-semibold uppercase">
-              Click to select or drag & drop a PDF file here
-            </p>
-          </div>
-
-          {/* File Info */}
-          {file && (
-            <div className="w-full max-w-2xl mt-6 p-4 rounded-lg bg-white shadow-sm text-left border border-green-200">
-              <h3 className="text-sm font-semibold uppercase text-gray-700">
-                Selected File: <span className="font-normal">{file.name}</span>
-              </h3>
-              <p className="text-xs font-semibold uppercase text-zinc-600">
-                Size: {formatFileSize(originalSize)}
+          {/* Drop Zone / File Info */}
+          {!file ? (
+            <div
+              className={cn(
+                "w-full max-w-2xl h-48 border-2 rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
+                dragActive
+                  ? "border-blue-500 text-blue-500 border-dashed"
+                  : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500 border-dashed"
+              )}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <CloudUploadIcon className="h-12 w-12 text-gray-400" />
+              <p className="text-sm font-semibold uppercase mt-4">
+                Click to select or drag & drop a PDF file here
               </p>
+              <p className="text-xs font-semibold uppercase mt-1 text-zinc-600">
+                Accepted format: .pdf
+              </p>
+            </div>
+          ) : (
+            <div className="w-full max-w-2xl p-6 rounded-xl bg-white shadow-lg border border-gray-200 space-y-4 text-left">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <FileIcon className="w-5 h-5 text-rose-500" />
+                  <p className="text-sm font-semibold uppercase">
+                    Selected File:{" "}
+                    <span className="font-normal text-gray-700">
+                      {file.name}
+                    </span>
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={removeFile}
+                  className="p-1 h-auto text-red-500 hover:bg-red-50 hover:text-red-700 transition-all rounded-full"
+                  aria-label="Remove file"
+                >
+                  <XCircleIcon className="h-5 w-5" />
+                </Button>
+              </div>
+              <Separator />
+              <div className="flex justify-center">
+                <Button
+                  onClick={convertToExcel}
+                  disabled={isConverting}
+                  variant={"outline"}
+                  className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase"
+                >
+                  {isConverting ? (
+                    <>
+                      <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                      Converting...
+                    </>
+                  ) : (
+                    "Convert to Excel"
+                  )}
+                </Button>
+              </div>
             </div>
           )}
 
           {/* Error Message */}
           {error && (
-            <div className="mt-4 w-full max-w-2xl p-4 rounded-lg bg-red-50 border border-red-300 text-red-600 text-sm font-semibold uppercase">
+            <div className="w-full max-w-2xl mt-8 p-4 rounded-lg bg-red-50 border border-red-300 text-red-600 text-sm font-semibold uppercase text-left">
               <p>{error}</p>
             </div>
           )}
 
-          {/* Convert Button */}
-          {file && (
-            <div className="mt-8">
-              <Button
-                onClick={convertToExcel}
-                disabled={isConverting}
-                variant={"outline"}
-                className="ring-2 ring-inset ring-rose-400 text-sm cursor-pointer font-semibold uppercase"
-              >
-                {isConverting ? "Converting..." : "Convert to Excel"}
-              </Button>
-            </div>
-          )}
-
           {/* Conversion Results */}
-          {convertedSize > 0 && (
-            <>
-              <Separator className="mt-8 w-full max-w-2xl" />
-              <div className="w-full max-w-2xl mt-6 p-6 rounded-lg bg-white shadow-sm text-left border border-green-200">
-                <h3 className="text-lg font-semibold uppercase mb-4 text-green-700">
-                  ✅ Conversion Complete
+          {downloadUrl && (
+            <div className="w-full max-w-2xl mt-8 p-6 rounded-xl bg-white shadow-lg border border-green-200 text-center space-y-4">
+              <div className="flex flex-col items-center">
+                <CheckCircle2Icon className="h-12 w-12 text-green-500" />
+                <h3 className="text-lg font-semibold uppercase mt-2 text-green-700">
+                  Conversion Complete
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col items-center">
-                    <span className="text-sm font-semibold uppercase text-gray-700">
-                      Original PDF:
-                    </span>
-                    <span className="text-xs font-semibold uppercase text-blue-500">
-                      {formatFileSize(originalSize)}
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <span className="text-sm font-semibold uppercase text-gray-700">
-                      Excel Spreadsheet:
-                    </span>
-                    <span className="text-xs font-semibold uppercase text-green-500">
-                      {formatFileSize(convertedSize)}
-                    </span>
-                  </div>
+                <p className="text-sm font-semibold uppercase text-zinc-600">
+                  Your Excel spreadsheet is ready for download.
+                </p>
+              </div>
+              <div className="flex justify-around items-center pt-4">
+                <div className="flex flex-col items-center">
+                  <span className="text-sm font-semibold uppercase text-gray-700">
+                    Original PDF
+                  </span>
+                  <span className="text-xs font-semibold uppercase text-blue-500">
+                    {formatFileSize(originalSize)}
+                  </span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-sm font-semibold uppercase text-gray-700">
+                    Excel Spreadsheet
+                  </span>
+                  <span className="text-xs font-semibold uppercase text-green-500">
+                    {formatFileSize(convertedSize)}
+                  </span>
                 </div>
               </div>
-            </>
-          )}
-
-          {/* Download Button */}
-          {downloadUrl && (
-            <div className="mt-6 w-full max-w-2xl text-center">
               <Button
                 variant={"outline"}
-                className="ring-2 ring-inset ring-green-500"
+                className="mt-4 ring-2 ring-inset ring-green-500"
               >
                 <a
                   href={downloadUrl}
                   download={`converted-${file.name.replace(".pdf", ".xlsx")}`}
                   className="text-sm font-semibold uppercase text-green-700"
                 >
-                  Download Excel Spreadsheet
+                  Download The Excel File
                 </a>
               </Button>
             </div>
           )}
-        </div>
-        <MoreToolsSidebar currentPage={"/pdf-to-excel"} />
+        </main>
+
+        {/* Sidebar Container */}
+        <aside className="md:w-[25%] p-4 bg-gray-100 border-l border-gray-200">
+          <MoreToolsSidebar currentPage={"/pdf-to-excel"} />
+        </aside>
       </div>
       <Footer />
     </>

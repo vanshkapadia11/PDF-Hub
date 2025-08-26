@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useRef } from "react";
 import axios from "axios";
 import { cn } from "@/lib/utils";
@@ -12,8 +13,15 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input"; // Assuming you have this component
-import { CircleXIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  CloudUploadIcon,
+  FileTextIcon,
+  CircleXIcon,
+  Loader2Icon,
+  CheckCircle2Icon,
+  DownloadIcon,
+} from "lucide-react";
 import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
@@ -24,7 +32,44 @@ export default function PDFRemover() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [downloadUrl, setDownloadUrl] = useState("");
+  const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef(null);
+
+  const handleFileSelect = (event) => {
+    setError("");
+    setDownloadUrl("");
+    const selectedFile = event.target.files[0];
+    if (selectedFile && selectedFile.type === "application/pdf") {
+      setFile(selectedFile);
+    } else {
+      setFile(null);
+      setError("Please select a valid PDF file.");
+    }
+  };
+
+  const handleDrop = (event) => {
+    event.preventDefault();
+    setDragActive(false);
+    setError("");
+    setDownloadUrl("");
+    const droppedFile = event.dataTransfer.files[0];
+    if (droppedFile && droppedFile.type === "application/pdf") {
+      setFile(droppedFile);
+    } else {
+      setFile(null);
+      setError("Please drop a valid PDF file.");
+    }
+  };
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+    setDragActive(true);
+  };
+
+  const handleDragLeave = (event) => {
+    event.preventDefault();
+    setDragActive(false);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,7 +80,7 @@ export default function PDFRemover() {
       return;
     }
     if (!pagesToRemove) {
-      setError("Please enter pages to remove.");
+      setError("Please enter the pages to remove.");
       return;
     }
 
@@ -54,43 +99,21 @@ export default function PDFRemover() {
       setDownloadUrl(url);
     } catch (err) {
       console.error(err);
-      setError(
-        err.response?.data?.error || "Failed to remove pages. Please try again."
-      );
+      const errorMessage =
+        err.response && err.response.data
+          ? await new Response(err.response.data).text()
+          : err.message || "Failed to remove pages. Please try again.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFileSelect = (event) => {
-    const selectedFile = event.target.files[0];
-    if (selectedFile && selectedFile.type === "application/pdf") {
-      setFile(selectedFile);
-      setError("");
-    } else {
-      setFile(null);
-      setError("Please select a valid PDF file.");
-    }
-  };
-
-  const handleDrop = (event) => {
-    event.preventDefault();
-    const droppedFile = event.dataTransfer.files[0];
-    if (droppedFile && droppedFile.type === "application/pdf") {
-      setFile(droppedFile);
-      setError("");
-    } else {
-      setFile(null);
-      setError("Please drop a valid PDF file.");
-    }
-  };
-
-  const handleDragOver = (event) => {
-    event.preventDefault();
-  };
-
   const removeFile = () => {
     setFile(null);
+    setPagesToRemove("");
+    setError("");
+    setDownloadUrl("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -99,18 +122,20 @@ export default function PDFRemover() {
   return (
     <>
       <Navbar />
-      <div className="grid md:grid-cols-[6fr_1fr] grid-rows-[1fr_1fr] md:min-h-screen min-h-[150vh] bg-gray-50 p-4">
-        <div className="flex flex-col items-center justify-center text-center">
-          <div className="mb-10 w-full max-w-2xl mx-auto text-left">
+
+      {/* Main Content & Sidebar Container */}
+      <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
+        {/* Main Content Area */}
+        <main className="flex-1 p-4 md:p-8 flex flex-col items-center text-center">
+          {/* Breadcrumb */}
+          <div className="w-full max-w-2xl mx-auto text-left">
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <a href="/">
-                      <span className="text-sm font-semibold uppercase cursor-pointer">
-                        Home
-                      </span>
-                    </a>
+                  <BreadcrumbLink href="/">
+                    <span className="text-sm font-semibold uppercase cursor-pointer">
+                      Home
+                    </span>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
@@ -122,9 +147,13 @@ export default function PDFRemover() {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <h1 className="text-4xl font-semibold uppercase">PDF Page Remover</h1>
+
+          {/* Header */}
+          <h1 className="text-4xl font-extrabold uppercase mt-6">
+            PDF Hub - Remove PDF Pages
+          </h1>
           <p className="text-xs font-semibold uppercase mt-2 mb-8 text-zinc-600">
-            Easily remove pages from your PDF document
+            Easily remove selected pages from your PDF document.
           </p>
 
           <input
@@ -132,105 +161,130 @@ export default function PDFRemover() {
             ref={fileInputRef}
             accept=".pdf"
             onChange={handleFileSelect}
-            style={{ display: "none" }}
+            className="hidden"
           />
 
-          <div
-            className={cn(
-              "w-full max-w-2xl h-48 border-2 border-dashed rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
-              file
-                ? "border-green-500 text-green-500"
-                : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500"
-            )}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <p className="text-sm font-semibold uppercase">
-              Click to select or drag & drop a PDF file here
-            </p>
-            <p className="text-xs font-semibold uppercase mt-2 text-zinc-600">
-              Accepted format: .pdf
-            </p>
-          </div>
-
-          {file && (
-            <div className="mt-6 w-full max-w-2xl text-left">
-              <h3 className="text-lg font-semibold uppercase mb-2">
-                Selected File:
-              </h3>
-              <ul className="bg-white p-4 rounded-lg shadow-sm">
-                <li className="flex items-center justify-between py-2 border-b last:border-b-0">
-                  <span className="text-sm text-gray-700 font-semibold uppercase">
-                    {file.name}
-                  </span>
-                  <button
-                    onClick={removeFile}
-                    className="text-red-400 hover:scale-105 transition-all duration-300"
-                  >
-                    <CircleXIcon className="h-5 w-5" />
-                  </button>
-                </li>
-              </ul>
+          {/* Drop Zone / File Info */}
+          {!file ? (
+            <div
+              className={cn(
+                "w-full max-w-2xl h-48 border-2 rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
+                dragActive
+                  ? "border-blue-500 text-blue-500 border-dashed"
+                  : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500 border-dashed"
+              )}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <CloudUploadIcon className="h-12 w-12 text-gray-400" />
+              <p className="text-sm font-semibold uppercase mt-4">
+                Click to select or drag & drop a PDF file here
+              </p>
+              <p className="text-xs font-semibold uppercase mt-1 text-zinc-600">
+                Accepted format: .pdf
+              </p>
+            </div>
+          ) : (
+            <div className="w-full max-w-2xl p-6 rounded-xl bg-white shadow-lg border border-gray-200 space-y-4 text-left">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <FileTextIcon className="w-5 h-5 text-rose-500" />
+                  <p className="text-sm font-semibold uppercase">
+                    Selected File:{" "}
+                    <span className="font-normal text-gray-700">
+                      {file.name}
+                    </span>
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={removeFile}
+                  className="p-1 h-auto text-red-500 hover:bg-red-50 hover:text-red-700 transition-all rounded-full"
+                  aria-label="Remove file"
+                >
+                  <CircleXIcon className="h-5 w-5" />
+                </Button>
+              </div>
+              <Separator />
+              <div className="space-y-2">
+                <label
+                  htmlFor="pagesToRemove"
+                  className="block text-sm font-semibold uppercase text-zinc-600"
+                >
+                  Pages to Remove (e.g., 1, 3-5, 8)
+                </label>
+                <Input
+                  type="text"
+                  id="pagesToRemove"
+                  value={pagesToRemove}
+                  onChange={(e) => setPagesToRemove(e.target.value)}
+                  className="text-center"
+                  placeholder="e.g., 1, 3-5, 8"
+                />
+              </div>
+              <div className="flex justify-center pt-2">
+                <Button
+                  onClick={handleSubmit}
+                  disabled={!file || !pagesToRemove || loading}
+                  variant={"outline"}
+                  className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                      Removing Pages...
+                    </>
+                  ) : (
+                    "Remove Pages"
+                  )}
+                </Button>
+              </div>
             </div>
           )}
 
-          <div className="mt-6 w-full max-w-2xl">
-            <label
-              htmlFor="pagesToRemove"
-              className="text-sm font-semibold uppercase text-zinc-600"
-            >
-              Pages to Remove (e.g., 1, 3-5, 8)
-            </label>
-            <Input
-              type="text"
-              id="pagesToRemove"
-              value={pagesToRemove}
-              onChange={(e) => setPagesToRemove(e.target.value)}
-              className="mt-2 text-center"
-              placeholder="e.g., 1, 3-5, 8"
-            />
-          </div>
-
-          <div className="mt-8">
-            <Button
-              onClick={handleSubmit}
-              disabled={!file || !pagesToRemove || loading}
-              variant={"outline"}
-              className={`ring-2 ring-inset ring-rose-400 text-sm cursor-pointer font-semibold uppercase`}
-            >
-              {loading ? "Removing Pages..." : "Remove Pages"}
-            </Button>
-          </div>
-
+          {/* Error Message */}
           {error && (
-            <p className="text-red-500 text-sm font-semibold mt-4">{error}</p>
+            <div className="w-full max-w-2xl mt-8 p-4 rounded-lg bg-red-50 border border-red-300 text-red-600 text-sm font-semibold uppercase text-left">
+              <p>{error}</p>
+            </div>
           )}
 
+          {/* Download Link */}
           {downloadUrl && (
-            <>
-              <Separator className="mt-8 w-full max-w-2xl" />
-              <div className="mt-8 w-full max-w-2xl p-6 bg-green-50 border border-green-300 rounded-lg text-center">
-                <h3 className="text-lg font-semibold uppercase mb-4 text-green-700">
-                  Pages removed successfully!
+            <div className="w-full max-w-2xl mt-8 p-6 rounded-xl bg-white shadow-lg border border-green-200 text-center space-y-4">
+              <div className="flex flex-col items-center">
+                <CheckCircle2Icon className="h-12 w-12 text-green-500" />
+                <h3 className="text-lg font-semibold uppercase mt-2 text-green-700">
+                  Pages Removed Successfully!
                 </h3>
-                <Button
-                  variant={"outline"}
-                  className="ring-2 ring-inset ring-green-500"
-                >
-                  <a
-                    href={downloadUrl}
-                    download="modified-document.pdf"
-                    className="text-sm font-semibold uppercase text-green-700"
-                  >
-                    Download The PDF
-                  </a>
-                </Button>
+                <p className="text-sm font-semibold uppercase text-zinc-600">
+                  Your modified PDF is ready for download.
+                </p>
               </div>
-            </>
+              <Button
+                variant={"outline"}
+                className="mt-4 ring-2 ring-inset ring-green-500"
+              >
+                <a
+                  href={downloadUrl}
+                  download={`modified-${file.name}`}
+                  className="text-sm font-semibold uppercase text-green-700 flex items-center"
+                >
+                  <DownloadIcon className="mr-2 h-4 w-4" />
+                  Download The PDF
+                </a>
+              </Button>
+            </div>
           )}
-        </div>
-        <MoreToolsSidebar currentPage={"/remove-pdf-pages"} />
+        </main>
+
+        {/* Sidebar Container */}
+        <aside className="md:w-[25%] p-4 bg-gray-100 border-l border-gray-200">
+          <MoreToolsSidebar currentPage={"/remove-pdf-pages"} />
+        </aside>
       </div>
       <Footer />
     </>

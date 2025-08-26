@@ -1,5 +1,5 @@
-// Frontend Component: CompressPDF.jsx
 "use client";
+
 import { useState, useRef } from "react";
 import {
   Breadcrumb,
@@ -18,6 +18,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
+import { Loader2Icon, CheckCircle2Icon } from "lucide-react";
+
 import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
@@ -65,6 +67,8 @@ export default function CompressPDF() {
       setDownloadUrl("");
       setCompressionDetails(null);
       event.dataTransfer.clearData();
+    } else {
+      setError("Please drop a valid PDF file");
     }
   };
 
@@ -138,18 +142,31 @@ export default function CompressPDF() {
   return (
     <>
       <Navbar />
-      <div className="grid md:grid-cols-[6fr_1fr] grid-rows-[1fr_1fr] md:min-h-screen min-h-[150vh] bg-gray-50 p-4">
-        <div className="flex flex-col items-center justify-center text-center">
-          <div className="mb-10 w-full max-w-2xl mx-auto text-left">
+
+      {/* Full-screen Loader Overlay */}
+      {isCompressing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center">
+            <Loader2Icon className="h-12 w-12 animate-spin text-rose-400" />
+            <p className="mt-4 text-sm font-semibold uppercase text-gray-700">
+              Compressing PDF, please wait...
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Main content container */}
+      <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
+        {/* Main content area */}
+        <main className="flex-1 p-4 md:p-8 flex flex-col items-center text-center">
+          <div className="w-full max-w-2xl mx-auto text-left">
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <a href="/">
-                      <span className="text-sm font-semibold uppercase cursor-pointer">
-                        Home
-                      </span>
-                    </a>
+                  <BreadcrumbLink href="/">
+                    <span className="text-sm font-semibold uppercase cursor-pointer">
+                      Home
+                    </span>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
@@ -162,14 +179,13 @@ export default function CompressPDF() {
             </Breadcrumb>
           </div>
 
-          <h1 className="text-4xl font-semibold uppercase">
+          <h1 className="text-4xl font-extrabold uppercase mt-6">
             PDF Hub - Compress PDF
           </h1>
           <p className="text-xs font-semibold uppercase mt-2 mb-8 text-zinc-600">
             Reduce the file size of your PDF while maintaining quality
           </p>
 
-          {/* File Input */}
           <input
             type="file"
             ref={fileInputRef}
@@ -178,13 +194,13 @@ export default function CompressPDF() {
             className="hidden"
           />
 
-          {/* Drop Zone */}
+          {/* Drag & Drop Zone */}
           <div
             className={cn(
-              "w-full max-w-2xl h-48 border-2 border-dashed rounded-lg flex items-center justify-center transition-colors cursor-pointer",
+              "w-full max-w-2xl h-48 border-2 rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
               file
                 ? "border-green-500 text-green-500"
-                : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500"
+                : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500 border-dashed"
             )}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
@@ -193,23 +209,34 @@ export default function CompressPDF() {
             <p className="text-sm font-semibold uppercase">
               Click to select or drag & drop a PDF file here
             </p>
+            {file && (
+              <p className="mt-2 text-sm font-medium">
+                Selected: <span className="font-bold">{file.name}</span>
+              </p>
+            )}
           </div>
 
-          {/* File Info */}
+          {/* Options & Action Section */}
           {file && (
-            <div className="w-full max-w-2xl mt-6 p-4 rounded-lg bg-white shadow-sm text-left border border-green-200">
-              <h3 className="text-sm font-semibold uppercase text-gray-700">
-                Selected File: <span className="font-normal">{file.name}</span>
-              </h3>
-              <p className="text-xs font-semibold uppercase text-zinc-600">
-                Original size: {formatFileSize(originalSize)}
-              </p>
-            </div>
-          )}
+            <div className="w-full max-w-2xl mt-8 p-6 rounded-xl bg-white shadow-lg border border-gray-200 space-y-6">
+              {/* File Info */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between text-left">
+                <div className="flex items-center">
+                  <CheckCircle2Icon className="w-5 h-5 text-green-500 mr-2" />
+                  <p className="text-sm font-semibold uppercase">
+                    File Selected:{" "}
+                    <span className="font-normal text-gray-700">
+                      {file.name}
+                    </span>
+                  </p>
+                </div>
+                <p className="text-xs font-semibold uppercase text-zinc-600 mt-2 sm:mt-0">
+                  Original size: {formatFileSize(originalSize)}
+                </p>
+              </div>
+              <Separator />
 
-          {/* Compression Options */}
-          {file && (
-            <div className="w-full max-w-2xl mt-6 p-4 rounded-lg bg-white shadow-sm text-left border border-gray-200">
+              {/* Compression Options Tabs */}
               <Tabs
                 defaultValue="preset"
                 className="w-full"
@@ -220,13 +247,13 @@ export default function CompressPDF() {
                     value="preset"
                     className="text-sm font-semibold uppercase"
                   >
-                    Preset Levels
+                    Preset
                   </TabsTrigger>
                   <TabsTrigger
                     value="custom"
                     className="text-sm font-semibold uppercase"
                   >
-                    Custom Quality
+                    Custom
                   </TabsTrigger>
                   <TabsTrigger
                     value="target"
@@ -236,205 +263,202 @@ export default function CompressPDF() {
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="preset">
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-semibold uppercase mb-4">
-                      Select Compression Level:
-                    </h3>
-                    <RadioGroup
-                      defaultValue="medium"
-                      onValueChange={setCompressionLevel}
-                    >
-                      <div className="flex items-center space-x-2 p-4 border rounded-lg">
-                        <RadioGroupItem value="low" id="r1" />
-                        <Label
-                          htmlFor="r1"
-                          className="text-sm font-semibold uppercase cursor-pointer"
-                        >
-                          Low (Best quality, larger file)
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2 p-4 border rounded-lg">
-                        <RadioGroupItem value="medium" id="r2" />
-                        <Label
-                          htmlFor="r2"
-                          className="text-sm font-semibold uppercase cursor-pointer"
-                        >
-                          Medium (Balanced quality and size)
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2 p-4 border rounded-lg">
-                        <RadioGroupItem value="high" id="r3" />
-                        <Label
-                          htmlFor="r3"
-                          className="text-sm font-semibold uppercase cursor-pointer"
-                        >
-                          High (Smaller file, good quality)
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2 p-4 border rounded-lg">
-                        <RadioGroupItem value="maximum" id="r4" />
-                        <Label
-                          htmlFor="r4"
-                          className="text-sm font-semibold uppercase cursor-pointer"
-                        >
-                          Maximum (Smallest file, lower quality)
-                        </Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="custom">
-                  <div className="space-y-6">
-                    <div>
-                      <Label className="text-sm font-semibold uppercase mb-2 block">
-                        Quality Level: {customQuality}%
-                      </Label>
-                      <Slider
-                        value={[customQuality]}
-                        onValueChange={(value) => setCustomQuality(value[0])}
-                        max={100}
-                        step={1}
-                        className="w-full"
-                      />
-                      <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                        <span>Lower Quality</span>
-                        <span>Better Quality</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                <TabsContent value="preset" className="space-y-4">
+                  <h3 className="text-sm font-semibold uppercase mb-4">
+                    Select Compression Level:
+                  </h3>
+                  <RadioGroup
+                    defaultValue="medium"
+                    onValueChange={setCompressionLevel}
+                  >
+                    <div className="flex items-center space-x-2 p-4 border rounded-lg">
+                      <RadioGroupItem value="low" id="r1" />
                       <Label
-                        htmlFor="metadata"
+                        htmlFor="r1"
                         className="text-sm font-semibold uppercase cursor-pointer"
                       >
-                        Remove Metadata
+                        Low (Best quality, larger file)
                       </Label>
-                      <Switch
-                        id="metadata"
-                        checked={removeMetadata}
-                        onCheckedChange={setRemoveMetadata}
-                      />
                     </div>
-
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-2 p-4 border rounded-lg">
+                      <RadioGroupItem value="medium" id="r2" />
                       <Label
-                        htmlFor="downsample"
+                        htmlFor="r2"
                         className="text-sm font-semibold uppercase cursor-pointer"
                       >
-                        Downsample Images
+                        Medium (Balanced quality and size)
                       </Label>
-                      <Switch
-                        id="downsample"
-                        checked={downsampleImages}
-                        onCheckedChange={setDownsampleImages}
-                      />
                     </div>
-                  </div>
+                    <div className="flex items-center space-x-2 p-4 border rounded-lg">
+                      <RadioGroupItem value="high" id="r3" />
+                      <Label
+                        htmlFor="r3"
+                        className="text-sm font-semibold uppercase cursor-pointer"
+                      >
+                        High (Smaller file, good quality)
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2 p-4 border rounded-lg">
+                      <RadioGroupItem value="maximum" id="r4" />
+                      <Label
+                        htmlFor="r4"
+                        className="text-sm font-semibold uppercase cursor-pointer"
+                      >
+                        Maximum (Smallest file, lower quality)
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </TabsContent>
 
-                <TabsContent value="target">
-                  <div className="space-y-4">
+                <TabsContent value="custom" className="space-y-6">
+                  <div>
                     <Label className="text-sm font-semibold uppercase mb-2 block">
-                      Target File Size (MB)
+                      Quality Level: {customQuality}%
                     </Label>
-                    <Input
-                      type="number"
-                      placeholder="Enter target size in MB"
-                      value={targetSize}
-                      onChange={(e) => setTargetSize(e.target.value)}
-                      className="w-full text-sm font-semibold uppercase"
-                      min="0.1"
-                      step="0.1"
+                    <Slider
+                      value={[customQuality]}
+                      onValueChange={(value) => setCustomQuality(value[0])}
+                      max={100}
+                      step={1}
+                      className="w-full accent-rose-500"
                     />
-                    <p className="text-xs text-muted-foreground font-semibold uppercase">
-                      Current size: {formatFileSize(originalSize)}
-                    </p>
+                    <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                      <span>Lower Quality</span>
+                      <span>Better Quality</span>
+                    </div>
                   </div>
+
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <Label
+                      htmlFor="metadata"
+                      className="text-sm font-semibold uppercase cursor-pointer"
+                    >
+                      Remove Metadata
+                    </Label>
+                    <Switch
+                      id="metadata"
+                      checked={removeMetadata}
+                      onCheckedChange={setRemoveMetadata}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <Label
+                      htmlFor="downsample"
+                      className="text-sm font-semibold uppercase cursor-pointer"
+                    >
+                      Downsample Images
+                    </Label>
+                    <Switch
+                      id="downsample"
+                      checked={downsampleImages}
+                      onCheckedChange={setDownsampleImages}
+                    />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="target" className="space-y-4">
+                  <Label className="text-sm font-semibold uppercase mb-2 block">
+                    Target File Size (MB)
+                  </Label>
+                  <Input
+                    type="number"
+                    placeholder="Enter target size in MB"
+                    value={targetSize}
+                    onChange={(e) => setTargetSize(e.target.value)}
+                    className="w-full text-sm font-semibold uppercase"
+                    min="0.1"
+                    step="0.1"
+                  />
+                  <p className="text-xs text-muted-foreground font-semibold uppercase">
+                    Current size: {formatFileSize(originalSize)}
+                  </p>
                 </TabsContent>
               </Tabs>
+
+              {/* Error Message */}
+              {error && (
+                <div className="p-4 rounded-lg bg-red-50 border border-red-300 w-full text-red-600 text-sm font-semibold uppercase">
+                  <p>{error}</p>
+                </div>
+              )}
+
+              {/* Compress Button */}
+              <div className="flex justify-center pt-4">
+                <Button
+                  onClick={compressPDF}
+                  disabled={isCompressing}
+                  variant={"outline"}
+                  className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase"
+                >
+                  {isCompressing ? (
+                    <>
+                      <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                      Compressing...
+                    </>
+                  ) : (
+                    "Compress PDF"
+                  )}
+                </Button>
+              </div>
             </div>
           )}
 
-          {/* Error Message */}
-          {error && (
-            <div className="mt-4 w-full max-w-2xl p-4 rounded-lg bg-red-50 border border-red-300 text-red-600 text-sm font-semibold uppercase">
-              <p>{error}</p>
-            </div>
-          )}
-
-          {/* Compress Button */}
-          {file && (
-            <div className="mt-8">
-              <Button
-                onClick={compressPDF}
-                disabled={isCompressing}
-                variant={"outline"}
-                className="ring-2 ring-inset ring-rose-400 text-sm cursor-pointer font-semibold uppercase"
-              >
-                {isCompressing ? "Compressing..." : "Compress PDF"}
-              </Button>
-            </div>
-          )}
-
-          {/* Results */}
+          {/* Results Section */}
           {compressionDetails && (
-            <>
-              <Separator className="mt-8 w-full max-w-2xl" />
-              <div className="w-full max-w-2xl mt-6 p-6 rounded-lg bg-white shadow-sm text-left border border-green-200">
-                <h3 className="text-lg font-semibold uppercase mb-4">
-                  Compression Results:
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex flex-col items-center">
-                    <span className="text-sm font-semibold uppercase text-gray-700">
-                      Original:
-                    </span>
-                    <span className="text-xs font-semibold uppercase text-blue-500">
-                      {formatFileSize(compressionDetails.originalSize)}
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <span className="text-sm font-semibold uppercase text-gray-700">
-                      Compressed:
-                    </span>
-                    <span className="text-xs font-semibold uppercase text-green-500">
-                      {formatFileSize(compressionDetails.compressedSize)}
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <span className="text-sm font-semibold uppercase text-gray-700">
-                      Reduction:
-                    </span>
-                    <span className="text-xs font-semibold uppercase text-amber-800">
-                      {compressionDetails.reduction}% smaller
-                    </span>
-                  </div>
+            <div className="w-full max-w-2xl mt-8 p-6 rounded-lg bg-white shadow-lg border border-green-200">
+              <h3 className="text-lg font-semibold uppercase mb-4 text-green-700 text-center">
+                Success!
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                <div className="flex flex-col items-center">
+                  <span className="text-sm font-semibold uppercase text-gray-700">
+                    Original:
+                  </span>
+                  <span className="text-xs font-semibold uppercase text-blue-500">
+                    {formatFileSize(compressionDetails.originalSize)}
+                  </span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-sm font-semibold uppercase text-gray-700">
+                    Compressed:
+                  </span>
+                  <span className="text-xs font-semibold uppercase text-green-500">
+                    {formatFileSize(compressionDetails.compressedSize)}
+                  </span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-sm font-semibold uppercase text-gray-700">
+                    Reduction:
+                  </span>
+                  <span className="text-xs font-semibold uppercase text-amber-800">
+                    {compressionDetails.reduction}% smaller
+                  </span>
                 </div>
               </div>
-            </>
-          )}
-
-          {/* Download Link */}
-          {downloadUrl && (
-            <div className="mt-8 w-full max-w-2xl text-center">
-              <Button
-                variant={"outline"}
-                className="ring-2 ring-inset ring-green-500"
-              >
-                <a
-                  href={downloadUrl}
-                  download={`compressed-${file.name}`}
-                  className="text-sm font-semibold uppercase"
+              <Separator className="my-6" />
+              <div className="flex justify-center">
+                <Button
+                  variant={"outline"}
+                  className="ring-2 ring-inset ring-green-500"
                 >
-                  Download Compressed PDF
-                </a>
-              </Button>
+                  <a
+                    href={downloadUrl}
+                    download={`compressed-${file.name}`}
+                    className="text-sm font-semibold uppercase"
+                  >
+                    Download Compressed PDF
+                  </a>
+                </Button>
+              </div>
             </div>
           )}
-        </div>
-        <MoreToolsSidebar currentPage={"/compress-pdf"} />
+        </main>
+
+        {/* Sidebar Container */}
+        <aside className="md:w-[25%] p-4 bg-gray-100 border-l border-gray-200">
+          <MoreToolsSidebar currentPage={"/compress-pdf"} />
+        </aside>
       </div>
       <Footer />
     </>

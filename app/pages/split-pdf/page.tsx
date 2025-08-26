@@ -36,7 +36,6 @@ export default function SplitPDF() {
       setFile(selectedFile);
       setRanges([""]);
       setDownloadUrls([]);
-      // Simple page count estimation (as in original code)
       const reader = new FileReader();
       reader.onload = function (e) {
         const pdfData = new Uint8Array(e.target.result);
@@ -132,103 +131,103 @@ export default function SplitPDF() {
 
   return (
     <>
-      <div className="flex flex-col min-h-screen">
-        <Navbar />
+      <Navbar />
 
-        {/* Full-screen Loader Overlay */}
-        {isSplitting && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
-            <div className="flex flex-col items-center">
-              <Loader2Icon className="h-12 w-12 animate-spin text-rose-400" />
-              <p className="mt-4 text-sm font-semibold uppercase text-gray-700">
-                Splitting PDF, please wait...
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* This is the key change. Remove the 'h-screen' class. */}
-        <div className="grid md:grid-cols-[6fr_1fr] grid-rows-[1fr_1fr] flex-grow bg-gray-50 p-4">
-          <div className="flex flex-col items-center justify-center text-center">
-            <div className="mb-10 w-full max-w-2xl mx-auto text-left">
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                      <a href="/">
-                        <span className="text-sm font-semibold uppercase cursor-pointer">
-                          Home
-                        </span>
-                      </a>
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage className="text-sm font-semibold uppercase">
-                      Split PDF
-                    </BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
-
-            <h1 className="text-4xl font-semibold uppercase">
-              PDF Hub - Split PDF
-            </h1>
-            <p className="text-xs font-semibold uppercase mt-2 mb-8 text-zinc-600">
-              Split a single PDF into multiple files by page ranges
+      {isSplitting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center">
+            <Loader2Icon className="h-12 w-12 animate-spin text-rose-400" />
+            <p className="mt-4 text-sm font-semibold uppercase text-gray-700">
+              Splitting PDF, please wait...
             </p>
+          </div>
+        </div>
+      )}
 
-            {/* File Input */}
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept=".pdf"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
+      {/* Main content container. Using flexbox for better vertical stacking and spacing. */}
+      <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
+        {/* Main content area */}
+        <main className="flex-1 p-4 md:p-8 flex flex-col items-center justify-start text-center">
+          <div className="w-full max-w-2xl mx-auto text-left">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/">
+                    <span className="text-sm font-semibold uppercase cursor-pointer">
+                      Home
+                    </span>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="text-sm font-semibold uppercase">
+                    Split PDF
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
 
-            {/* Drop Zone */}
-            <div
-              className={cn(
-                "w-full max-w-2xl h-48 border-2 border-dashed rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
-                file
-                  ? "border-green-500 text-green-500"
-                  : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500"
-              )}
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <p className="text-sm font-semibold uppercase ">
-                Click to select or drag & drop a PDF file here
-              </p>
-            </div>
+          <h1 className="text-4xl font-extrabold uppercase mt-6">
+            PDF Hub - Split PDF
+          </h1>
+          <p className="text-xs font-semibold uppercase mt-2 mb-8 text-zinc-600">
+            Split a single PDF into multiple files by page ranges
+          </p>
 
-            {/* File Info */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept=".pdf"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+
+          {/* Drag & Drop Zone */}
+          <div
+            className={cn(
+              "w-full max-w-2xl h-48 border-2 rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
+              file
+                ? "border-green-500 text-green-500"
+                : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500 border-dashed"
+            )}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <p className="text-sm font-semibold uppercase">
+              Click to select or drag & drop a PDF file here
+            </p>
             {file && (
-              <div className="w-full max-w-2xl mt-6 p-4 rounded-lg bg-white shadow-sm text-left border border-green-200">
-                <h3 className="text-sm font-semibold uppercase text-gray-700">
-                  Selected File:{" "}
-                  <span className="font-normal">{file.name}</span>
+              <p className="mt-2 text-sm font-medium">
+                Selected: <span className="font-bold">{file.name}</span>
+              </p>
+            )}
+          </div>
+
+          {/* File Info & Options Section */}
+          {file && (
+            <div className="w-full max-w-2xl mt-8 p-6 rounded-xl bg-white shadow-lg border border-gray-200 space-y-6">
+              <div className="text-left">
+                <h3 className="text-lg font-semibold uppercase text-gray-700">
+                  File Details
                 </h3>
+                <p className="text-sm font-normal text-gray-600 mt-2">
+                  <span className="font-bold">Name:</span> {file.name}
+                </p>
                 {pageCount > 0 && (
-                  <p className="text-xs text-gray-600">
-                    Total pages: {pageCount}
+                  <p className="text-sm font-normal text-gray-600">
+                    <span className="font-bold">Total Pages:</span> {pageCount}
                   </p>
                 )}
               </div>
-            )}
-
-            {/* Range Inputs */}
-            {file && (
-              <div className="w-full max-w-2xl mt-6 p-4 rounded-lg bg-white shadow-sm text-left border border-gray-200">
+              <Separator />
+              <div className="text-left">
                 <h3 className="text-lg font-semibold uppercase">
-                  Page Ranges to Extract:
+                  Page Ranges to Extract
                 </h3>
                 <p className="text-xs font-semibold uppercase my-2 text-zinc-600">
-                  Examples: "1" for page 1, "1-5" for pages 1 to 5, "1,3,5" for
-                  pages 1, 3 and 5
+                  Examples: "1-5", "8,10", "15-" or a combination
                 </p>
                 {ranges.map((range, index) => (
                   <div key={index} className="flex items-center gap-2 mt-2">
@@ -249,7 +248,6 @@ export default function SplitPDF() {
                     </Button>
                   </div>
                 ))}
-
                 <Button
                   onClick={addRange}
                   variant={"outline"}
@@ -258,18 +256,14 @@ export default function SplitPDF() {
                   + Add Another Range
                 </Button>
               </div>
-            )}
 
-            {/* Error Message */}
-            {error && (
-              <div className="mt-4 p-4 rounded-lg bg-red-50 border border-red-300 w-full max-w-2xl text-red-600 text-sm font-semibold uppercase">
-                <p>{error}</p>
-              </div>
-            )}
+              {error && (
+                <div className="p-4 rounded-lg bg-red-50 border border-red-300 w-full text-red-600 text-sm font-semibold uppercase">
+                  <p>{error}</p>
+                </div>
+              )}
 
-            {/* Split Button */}
-            {file && (
-              <div className="mt-8">
+              <div className="flex justify-center pt-4">
                 <Button
                   onClick={splitPDF}
                   disabled={
@@ -288,40 +282,40 @@ export default function SplitPDF() {
                   )}
                 </Button>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Download Link */}
-            {downloadUrls.length > 0 && (
-              <>
-                <Separator className="mt-8 w-full max-w-2xl" />
-                <div className="mt-8 w-full max-w-2xl p-6 bg-green-50 border border-green-300 rounded-lg text-center">
-                  <h3 className="text-lg font-semibold uppercase mb-4 text-green-700">
-                    Success!
-                  </h3>
-                  <p className="text-sm font-semibold uppercase text-zinc-600">
-                    Your PDF has been split into {downloadUrls.length} file
-                    {downloadUrls.length > 1 ? "s" : ""}.
-                  </p>
-                  <Button
-                    variant={"outline"}
-                    className="mt-4 ring-2 ring-inset ring-green-500"
-                  >
-                    <a
-                      href={downloadUrls[0]}
-                      download="split-documents.zip"
-                      className="text-sm font-semibold uppercase text-green-700"
-                    >
-                      Download All Files as ZIP
-                    </a>
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
+          {downloadUrls.length > 0 && (
+            <div className="mt-8 w-full max-w-2xl p-6 bg-green-50 border border-green-300 rounded-lg text-center">
+              <h3 className="text-lg font-semibold uppercase mb-4 text-green-700">
+                Success!
+              </h3>
+              <p className="text-sm font-semibold uppercase text-zinc-600">
+                Your PDF has been split into {downloadUrls.length} file
+                {downloadUrls.length > 1 ? "s" : ""}.
+              </p>
+              <Button
+                variant={"outline"}
+                className="mt-4 ring-2 ring-inset ring-green-500"
+              >
+                <a
+                  href={downloadUrls[0]}
+                  download="split-documents.zip"
+                  className="text-sm font-semibold uppercase text-green-700"
+                >
+                  Download All Files as ZIP
+                </a>
+              </Button>
+            </div>
+          )}
+        </main>
+
+        {/* Sidebar Container */}
+        <aside className="md:w-[25%] p-4 bg-gray-100 border-l border-gray-200">
           <MoreToolsSidebar currentPage={"/split-pdf"} />
-        </div>
-        <Footer />
+        </aside>
       </div>
+      <Footer />
     </>
   );
 }
