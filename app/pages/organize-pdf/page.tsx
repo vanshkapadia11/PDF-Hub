@@ -196,7 +196,7 @@ export default function PDFOrganizer() {
           "Could not process PDF completely. The page previews may not be available, but you can still reorder based on page numbers."
         );
         // Fallback to a simple page list if preview fails
-        let numPages = Math.max(1, Math.floor(selectedFile.size / 50000));
+        const numPages = Math.max(1, Math.floor(selectedFile.size / 50000));
         const initialPages = Array.from({ length: numPages }, (_, i) => ({
           id: `${i + 1}-${selectedFile.name}`,
           pageNumber: i + 1,
