@@ -36,6 +36,7 @@ import { CSS } from "@dnd-kit/utilities";
 import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
+import Image from "next/image";
 
 // Component for a single draggable page
 function SortablePage({ page, removePage }) {
@@ -84,7 +85,7 @@ function SortablePage({ page, removePage }) {
       </div>
 
       {preview ? (
-        <img
+        <Image
           src={preview}
           alt={`Page ${pageNumber} preview`}
           className="w-full h-full object-cover pointer-events-none"

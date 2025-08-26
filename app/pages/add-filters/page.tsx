@@ -18,6 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
+import Image from "next/image";
 
 export default function FilterImagePage() {
   const [file, setFile] = useState(null);
@@ -206,7 +207,7 @@ export default function FilterImagePage() {
                   </h2>
                   {previewUrl && (
                     <div className="w-full max-w-[300px] aspect-square rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center border shadow-inner">
-                      <img
+                      <Image
                         src={previewUrl}
                         alt="Live preview of filtered image"
                         className="max-w-full max-h-full object-contain"
