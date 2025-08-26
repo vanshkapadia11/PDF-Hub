@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+📄 PDF Category
+Merge PDFs
 
-## Getting Started
+Split PDFs
 
-First, run the development server:
+Remove Pages Form pDF ------- TODO:
+Extract Pages Form pDF ------- TODO:
+organise pDF ------- TODO:
+scan to pDF ------- TODO:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Compress PDF (reduce file size)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+PDF to Word (.docx)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+PDF to Excel (.xlsx)
+Excel To PDf
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+PDF to JPG/PNG (convert each page to an image)
 
-## Learn More
+JPG/PNG to PDF
 
-To learn more about Next.js, take a look at the following resources:
+Add Page Numbers to PDF
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Password Protect / Unprotect PDF (careful with security here!)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+🖼️ Image Category
+Crop Image
 
-## Deploy on Vercel
+Resize Image (by pixels or percentage)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Convert Image (JPG, PNG, WEBP, GIF, SVG)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Compress Image (reduce file size without losing much quality)
+
+Rotate & Flip
+
+Add Filters (Brightness, Contrast, Saturate)
+
+Watermark Adder (Add text or image watermark) Remainging
+
+Background Remover (Your original idea!) Remainging
+
+Image Upscaler (Make image bigger with AI)Remainging
+
+📹 Video Category (More complex, but awesome)
+Video to GIF ConverterRemainging
+
+Video Compressor (reduce file size)Remainging
+
+Video Trimmer/Cutter (cut clips)Remainging
+
+Video Converter (MP4, MOV, AVI, WEBM)Remainging
+
+Extract Audio from Video (Video to MP3) - This is hugely popular.Remainging
+
+📝 Text & Data Category
+PDF to Text Converter
+
+Word Counter & Character Counter
+
+JSON Formatter & Validator
+
+CSV to JSON Converter
+
+XML Formatter
+
+Diff Checker (compare two texts to see differences)
+
+🔄 Converter Category
+Currency Converter (with live rates)
+
+Unit Converter (length, weight, temperature)
+
+Color Code Converter (HEX to RGB to HSL)
+
+Timezone Converter

@@ -1,0 +1,327 @@
+"use client";
+
+import { useState, useRef } from "react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { CircleXIcon, Loader2Icon } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import Navbar from "@/components/Navbar";
+import MoreToolsSidebar from "@/components/MoreToolsSidebar";
+import Footer from "@/components/Footer";
+
+export default function SplitPDF() {
+  const [file, setFile] = useState(null);
+  const [ranges, setRanges] = useState([""]);
+  const [isSplitting, setIsSplitting] = useState(false);
+  const [downloadUrls, setDownloadUrls] = useState([]);
+  const [error, setError] = useState("");
+  const fileInputRef = useRef(null);
+  const [pageCount, setPageCount] = useState(0);
+
+  const handleFileSelect = (event) => {
+    setError("");
+    const selectedFile = event.target.files[0];
+
+    if (selectedFile && selectedFile.type === "application/pdf") {
+      setFile(selectedFile);
+      setRanges([""]);
+      setDownloadUrls([]);
+      // Simple page count estimation (as in original code)
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const pdfData = new Uint8Array(e.target.result);
+        const match = /\/Count\s+(\d+)/.exec(new TextDecoder().decode(pdfData));
+        if (match) {
+          setPageCount(parseInt(match[1], 10));
+        } else {
+          setPageCount(0);
+        }
+      };
+      reader.readAsArrayBuffer(selectedFile);
+    } else {
+      setError("Please select a valid PDF file");
+    }
+  };
+
+  const handleDrop = (event) => {
+    event.preventDefault();
+    setError("");
+    const droppedFiles = Array.from(event.dataTransfer.files);
+
+    if (droppedFiles.length > 0 && droppedFiles[0].type === "application/pdf") {
+      setFile(droppedFiles[0]);
+      setRanges([""]);
+      setDownloadUrls([]);
+      event.dataTransfer.clearData();
+    }
+  };
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+  };
+
+  const addRange = () => {
+    setRanges([...ranges, ""]);
+  };
+
+  const removeRange = (index) => {
+    if (ranges.length > 1) {
+      const newRanges = [...ranges];
+      newRanges.splice(index, 1);
+      setRanges(newRanges);
+    }
+  };
+
+  const updateRange = (index, value) => {
+    const newRanges = [...ranges];
+    newRanges[index] = value;
+    setRanges(newRanges);
+  };
+
+  const splitPDF = async () => {
+    if (!file) {
+      setError("Please select a PDF file first");
+      return;
+    }
+
+    const validRanges = ranges.filter((r) => r.trim() !== "");
+    if (validRanges.length === 0) {
+      setError("Please enter at least one page range.");
+      return;
+    }
+
+    setIsSplitting(true);
+    setError("");
+    setDownloadUrls([]);
+
+    try {
+      const formData = new FormData();
+      formData.append("pdf", file);
+      formData.append("ranges", JSON.stringify(validRanges));
+
+      const response = await fetch("/api/split-pdf", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Server error: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      setDownloadUrls([url]);
+    } catch (error) {
+      console.error("Error splitting PDF:", error);
+      setError(error.message || "Failed to split PDF. Please try again.");
+    } finally {
+      setIsSplitting(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+
+        {/* Full-screen Loader Overlay */}
+        {isSplitting && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+            <div className="flex flex-col items-center">
+              <Loader2Icon className="h-12 w-12 animate-spin text-rose-400" />
+              <p className="mt-4 text-sm font-semibold uppercase text-gray-700">
+                Splitting PDF, please wait...
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* This is the key change. Remove the 'h-screen' class. */}
+        <div className="grid md:grid-cols-[6fr_1fr] grid-rows-[1fr_1fr] flex-grow bg-gray-50 p-4">
+          <div className="flex flex-col items-center justify-center text-center">
+            <div className="mb-10 w-full max-w-2xl mx-auto text-left">
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                      <a href="/">
+                        <span className="text-sm font-semibold uppercase cursor-pointer">
+                          Home
+                        </span>
+                      </a>
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage className="text-sm font-semibold uppercase">
+                      Split PDF
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+
+            <h1 className="text-4xl font-semibold uppercase">
+              PDF Hub - Split PDF
+            </h1>
+            <p className="text-xs font-semibold uppercase mt-2 mb-8 text-zinc-600">
+              Split a single PDF into multiple files by page ranges
+            </p>
+
+            {/* File Input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept=".pdf"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+
+            {/* Drop Zone */}
+            <div
+              className={cn(
+                "w-full max-w-2xl h-48 border-2 border-dashed rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
+                file
+                  ? "border-green-500 text-green-500"
+                  : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500"
+              )}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <p className="text-sm font-semibold uppercase ">
+                Click to select or drag & drop a PDF file here
+              </p>
+            </div>
+
+            {/* File Info */}
+            {file && (
+              <div className="w-full max-w-2xl mt-6 p-4 rounded-lg bg-white shadow-sm text-left border border-green-200">
+                <h3 className="text-sm font-semibold uppercase text-gray-700">
+                  Selected File:{" "}
+                  <span className="font-normal">{file.name}</span>
+                </h3>
+                {pageCount > 0 && (
+                  <p className="text-xs text-gray-600">
+                    Total pages: {pageCount}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Range Inputs */}
+            {file && (
+              <div className="w-full max-w-2xl mt-6 p-4 rounded-lg bg-white shadow-sm text-left border border-gray-200">
+                <h3 className="text-lg font-semibold uppercase">
+                  Page Ranges to Extract:
+                </h3>
+                <p className="text-xs font-semibold uppercase my-2 text-zinc-600">
+                  Examples: "1" for page 1, "1-5" for pages 1 to 5, "1,3,5" for
+                  pages 1, 3 and 5
+                </p>
+                {ranges.map((range, index) => (
+                  <div key={index} className="flex items-center gap-2 mt-2">
+                    <Input
+                      type="text"
+                      placeholder="e.g., 1-5 or 1,3,5"
+                      value={range}
+                      onChange={(e) => updateRange(index, e.target.value)}
+                      className="flex-1 text-sm font-medium uppercase"
+                    />
+                    <Button
+                      onClick={() => removeRange(index)}
+                      className="p-2"
+                      disabled={ranges.length <= 1}
+                      variant={"ghost"}
+                    >
+                      <CircleXIcon className="w-4 h-4 text-rose-400 hover:text-rose-600" />
+                    </Button>
+                  </div>
+                ))}
+
+                <Button
+                  onClick={addRange}
+                  variant={"outline"}
+                  className="text-sm font-semibold uppercase mt-4 text-green-600"
+                >
+                  + Add Another Range
+                </Button>
+              </div>
+            )}
+
+            {/* Error Message */}
+            {error && (
+              <div className="mt-4 p-4 rounded-lg bg-red-50 border border-red-300 w-full max-w-2xl text-red-600 text-sm font-semibold uppercase">
+                <p>{error}</p>
+              </div>
+            )}
+
+            {/* Split Button */}
+            {file && (
+              <div className="mt-8">
+                <Button
+                  onClick={splitPDF}
+                  disabled={
+                    isSplitting || ranges.filter((r) => r.trim()).length === 0
+                  }
+                  variant={"outline"}
+                  className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase"
+                >
+                  {isSplitting ? (
+                    <>
+                      <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                      Splitting...
+                    </>
+                  ) : (
+                    "Split PDF"
+                  )}
+                </Button>
+              </div>
+            )}
+
+            {/* Download Link */}
+            {downloadUrls.length > 0 && (
+              <>
+                <Separator className="mt-8 w-full max-w-2xl" />
+                <div className="mt-8 w-full max-w-2xl p-6 bg-green-50 border border-green-300 rounded-lg text-center">
+                  <h3 className="text-lg font-semibold uppercase mb-4 text-green-700">
+                    Success!
+                  </h3>
+                  <p className="text-sm font-semibold uppercase text-zinc-600">
+                    Your PDF has been split into {downloadUrls.length} file
+                    {downloadUrls.length > 1 ? "s" : ""}.
+                  </p>
+                  <Button
+                    variant={"outline"}
+                    className="mt-4 ring-2 ring-inset ring-green-500"
+                  >
+                    <a
+                      href={downloadUrls[0]}
+                      download="split-documents.zip"
+                      className="text-sm font-semibold uppercase text-green-700"
+                    >
+                      Download All Files as ZIP
+                    </a>
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+          <MoreToolsSidebar currentPage={"/split-pdf"} />
+        </div>
+        <Footer />
+      </div>
+    </>
+  );
+}
