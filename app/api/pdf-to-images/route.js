@@ -1,5 +1,4 @@
 import { Buffer } from "buffer";
-import pd
 
 export async function POST(request) {
   try {

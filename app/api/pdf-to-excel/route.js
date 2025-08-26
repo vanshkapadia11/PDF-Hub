@@ -1,37 +1,54 @@
-import { getDocument } from "pdfjs-dist/legacy/build/pdf.js";
-import JSZip from "jszip";
-import { createCanvas } from "canvas";
+import pdf from "pdf-parse";
+import ExcelJS from "exceljs";
+import { NextResponse } from "next/server";
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).end();
-
+export async function POST(request) {
   try {
-    const data = [];
-    req.on("data", (chunk) => data.push(chunk));
-    req.on("end", async () => {
-      const buffer = Buffer.concat(data);
-      const pdf = await getDocument({ data: buffer }).promise;
-      const zip = new JSZip();
+    const pdfBuffer = Buffer.from(
+      await request.blob().then((b) => b.arrayBuffer())
+    );
 
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: 2 });
+    // Check if the buffer is empty
+    if (pdfBuffer.length === 0) {
+      return NextResponse.json(
+        { error: "No file provided in the request body." },
+        { status: 400 }
+      );
+    }
 
-        const canvas = createCanvas(viewport.width, viewport.height);
-        const ctx = canvas.getContext("2d");
+    // Use the buffer directly with pdf-parse
+    const pdfData = await pdf(pdfBuffer);
+    const text = pdfData.text;
 
-        await page.render({ canvasContext: ctx, viewport }).promise;
+    // Create an Excel workbook
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Extracted Text");
 
-        zip.file(`page-${i}.png`, canvas.toBuffer("image/png"));
+    const lines = text.split("\n");
+    lines.forEach((line) => {
+      const cleanedLine = line.trim();
+      if (cleanedLine) {
+        worksheet.addRow([cleanedLine]);
       }
+    });
 
-      const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
-      res.setHeader("Content-Type", "application/zip");
-      res.setHeader("Content-Disposition", 'attachment; filename="pages.zip"');
-      res.send(zipBuffer);
+    // Generate the Excel file as a buffer
+    const excelBuffer = await workbook.xlsx.writeBuffer();
+
+    // Return the Excel file as a response
+    return new NextResponse(excelBuffer, {
+      status: 200,
+      headers: {
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="converted-${Date.now()}.xlsx"`,
+      },
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).send("Error processing PDF");
+    console.error("Error processing PDF:", err);
+    return NextResponse.json(
+      { error: "Failed to process PDF file." },
+      { status: 500 }
+    );
   }
 }

@@ -1,3 +1,5 @@
+// components/PdfToExcel.js
+
 "use client";
 
 import { useState, useRef } from "react";
@@ -95,12 +97,12 @@ export default function PdfToExcel() {
     setConvertedSize(0);
 
     try {
-      const formData = new FormData();
-      formData.append("pdf", file);
-
       const response = await fetch("/api/pdf-to-excel", {
         method: "POST",
-        body: formData,
+        body: file,
+        headers: {
+          "Content-Type": "application/pdf",
+        },
       });
 
       if (!response.ok) {
