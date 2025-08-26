@@ -13,7 +13,7 @@ const page = () => {
         <Link href={"/pages/pdf-to-images"}>PDF to Image</Link>
         <Link href={"/pages/images-to-pdf"}>imag to pdf</Link>
         <Link href={"/pages/add-number-to-pages"}>Add Number To Pages</Link>
-        <Link href={"/pages/protect-by-password"}>Protect The PDF</Link>
+        {/* <Link href={"/pages/protect-by-password"}>Protect The PDF</Link> */}
         <Link href={"/pages/crop-image"}>Crop The Image</Link>
         <Link href={"/pages/resize-image"}>Resize Image</Link>
         <Link href={"/pages/convert-image"}>convert Image</Link>
@@ -27,7 +27,7 @@ const page = () => {
         <Link href={"/pages/remove-pdf-pages"}>Remove Pages From Pdf</Link>
         <Link href={"/pages/extract-pdf-pages"}>Extract Pages From Pdf</Link>
         <Link href={"/pages/organize-pdf"}>Organize Pdf</Link>
-        <Link href={"/pages/more"}>More</Link>
+        {/* <Link href={"/pages/more"}>More</Link> */}
       </div>
     </>
   );
