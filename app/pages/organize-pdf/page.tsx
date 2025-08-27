@@ -142,9 +142,12 @@ export default function PDFOrganizer() {
   useEffect(() => {
     const loadPdfjs = async () => {
       try {
+        // Import the main PDF.js library
         const pdfjsLib = await import("pdfjs-dist/build/pdf");
-        const pdfjsWorker = await import("pdfjs-dist/build/pdf.worker.entry");
-        pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+
+        // Set the worker source to the correct file name with the .mjs extension
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
+
         setPdfjs(pdfjsLib);
         setIsPdfjsLoaded(true);
       } catch (error) {
@@ -200,26 +203,33 @@ export default function PDFOrganizer() {
         const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
         const numPages = pdf.numPages;
 
-        const previews = await renderPagePreviews(pdf);
-        const initialPages: PDFPage[] = previews.map((preview, i) => ({
-          id: `${i + 1}-${selectedFile.name}`,
-          pageNumber: i + 1,
-          preview: preview,
-        }));
+        // Start rendering previews, but don't wait for them
+        const previewsPromise = renderPagePreviews(pdf);
 
+        // Immediately set pages with a placeholder while previews load
+        const initialPages: PDFPage[] = Array.from(
+          { length: numPages },
+          (_, i) => ({
+            id: `${i + 1}-${selectedFile.name}`,
+            pageNumber: i + 1,
+            preview: null,
+          })
+        );
         setPages(initialPages);
+
+        // Update pages as previews become available
+        const previews = await previewsPromise;
+        setPages((prevPages) => {
+          return prevPages.map((page, i) => ({
+            ...page,
+            preview: previews[i],
+          }));
+        });
       } catch (error: any) {
         console.error("Error processing PDF:", error);
-        setError(
-          "Could not process PDF completely. The page previews may not be available, but you can still reorder based on page numbers."
-        );
-        // Fallback to a simple page list if preview fails
-        const initialPages: PDFPage[] = Array.from({ length: 1 }, (_, i) => ({
-          id: `${i + 1}-${selectedFile.name}`,
-          pageNumber: i + 1,
-          preview: null,
-        }));
-        setPages(initialPages);
+        setError("Could not process PDF completely. Please try again.");
+        // If everything fails, clear the pages
+        setPages([]);
       } finally {
         setLoading(false);
       }
@@ -436,7 +446,7 @@ export default function PDFOrganizer() {
                   <h3 className="text-lg font-semibold uppercase mb-4">
                     Drag and drop pages to reorder ({pages.length} pages)
                   </h3>
-                  <div className="flex flex-col items-center">
+                  <div className="flex-col items-center">
                     <DndContext
                       sensors={sensors}
                       collisionDetection={closestCenter}

@@ -8,6 +8,7 @@ import {
   MergeIcon,
   MoveDownRightIcon,
   MenuIcon,
+  Text,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -43,6 +44,12 @@ const navLinks = [
     iconColor: "text-emerald-400",
   },
   {
+    name: "resize PDf",
+    href: "/pages/resize-pdf",
+    icon: Text,
+    iconColor: "text-cyan-400",
+  },
+  {
     name: "more",
     href: "/pages/more",
     icon: MoveDownRightIcon,
@@ -54,7 +61,7 @@ const Navbar = () => {
   const path = usePathname();
 
   return (
-    <section className="flex items-center justify-between py-4 px-4 md:px-16 border-b-2 border-[#e8e8e8] sticky top-0 z-50 bg-white">
+    <section className="flex items-center justify-between py-4 px-4 md:px-10 border-b-2 border-[#e8e8e8] sticky top-0 z-50 bg-white">
       {/* Logo Section */}
       <div className="flex items-center gap-2 text-sm font-semibold uppercase">
         <LucideHopOff /> PDF Hub
@@ -75,7 +82,7 @@ const Navbar = () => {
                     "flex items-center gap-2 py-2 px-4 rounded-lg text-sm font-semibold uppercase transition-all duration-300",
                     isActive
                       ? "bg-gray-100 text-black shadow-inner"
-                      : "text-gray-500 hover:text-black hover:bg-gray-50"
+                      : "text-gray-500 hover:text-black hover:bg-gray-200"
                   )}
                 >
                   <Icon size={16} className={link.iconColor} />
