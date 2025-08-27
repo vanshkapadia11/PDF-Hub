@@ -1,9 +1,15 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import type { ChangeEvent, DragEvent, FormEvent } from "react";
-import axios, { isAxiosError } from "axios"; // Import isAxiosError for type-safe error handling
+import { useState, useRef, ChangeEvent, useEffect } from "react";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import {
+  Loader2Icon,
+  CheckCircle2Icon,
+  CircleXIcon,
+  Repeat2Icon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -12,27 +18,18 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  CircleXIcon,
-  Loader2Icon,
-  CheckCircle2Icon,
-  Repeat2Icon,
-} from "lucide-react";
 import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
 
-export default function PDFExtractor() {
+export default function EditPDF() {
   const [file, setFile] = useState<File | null>(null);
-  const [pagesToKeep, setPagesToKeep] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [downloadUrl, setDownloadUrl] = useState<string>("");
   const [dragActive, setDragActive] = useState<boolean>(false);
+  const [textToAdd, setTextToAdd] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Clean up object URL when component unmounts or downloadUrl changes
@@ -44,117 +41,125 @@ export default function PDFExtractor() {
 
   const resetState = () => {
     setFile(null);
-    setPagesToKeep("");
     setLoading(false);
     setError("");
     setDownloadUrl("");
+    setTextToAdd("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setDownloadUrl("");
-    if (!file) {
-      setError("Please select a PDF file.");
-      return;
-    }
-    if (!pagesToKeep.trim()) {
-      setError("Please enter pages to extract.");
-      return;
-    }
-
-    setLoading(true);
-
-    const formData = new FormData();
-    formData.append("pdf", file);
-    formData.append("pagesToKeep", pagesToKeep);
-
-    try {
-      const res = await axios.post("/api/extract-pdf-pages", formData, {
-        responseType: "blob",
-      });
-
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      setDownloadUrl(url);
-    } catch (err: unknown) {
-      // Use unknown for type safety
-      console.error("Extraction failed:", err);
-      // More specific error handling
-      if (isAxiosError(err) && err.response) {
-        // Axios errors with a response often contain an error message in the body
-        const errorData = await new Response(err.response.data).text();
-        setError(
-          JSON.parse(errorData).error ||
-            "Failed to extract pages. Please try again."
-        );
-      } else if (err instanceof Error) {
-        setError(err.message || "An unexpected error occurred.");
-      } else {
-        setError("An unknown error occurred.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0] || null;
+    const selectedFile = event.target.files?.[0];
     if (selectedFile && selectedFile.type === "application/pdf") {
       setFile(selectedFile);
       setError("");
-      setDownloadUrl(""); // Reset download URL on new file selection
+      setDownloadUrl("");
+      setTextToAdd("");
     } else {
       setFile(null);
       setError("Please select a valid PDF file.");
     }
   };
 
-  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setDragActive(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
-    const droppedFile = event.dataTransfer.files?.[0] || null;
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setDragActive(false);
+    const droppedFile = event.dataTransfer.files[0];
     if (droppedFile && droppedFile.type === "application/pdf") {
       setFile(droppedFile);
       setError("");
-      setDownloadUrl(""); // Reset download URL on new file drop
+      setDownloadUrl("");
+      setTextToAdd("");
     } else {
       setFile(null);
       setError("Please drop a valid PDF file.");
     }
   };
 
-  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setDragActive(true);
-  };
+  const handleEditPDF = async () => {
+    if (!file) {
+      setError("Please select a PDF file first.");
+      return;
+    }
+    if (!textToAdd.trim()) {
+      setError("Please enter some text to add.");
+      return;
+    }
 
-  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setDragActive(false);
+    setLoading(true);
+    setDownloadUrl("");
+    setError("");
+
+    try {
+      const existingPdfBytes = await file.arrayBuffer();
+      const pdfDoc = await PDFDocument.load(existingPdfBytes);
+
+      // Get the first page of the document
+      const pages = pdfDoc.getPages();
+      const firstPage = pages[0];
+
+      // Embed a standard font
+      const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+      // Get the page dimensions for positioning
+      const { width, height } = firstPage.getSize();
+
+      // Draw the text string on the page
+      firstPage.drawText(textToAdd, {
+        x: 50,
+        y: height - 50,
+        size: 30,
+        font: helveticaFont,
+        color: rgb(0.95, 0.1, 0.1),
+      });
+
+      // Serialize the PDFDocument to bytes
+      const pdfBytes = await pdfDoc.save();
+
+      // Create a Blob and a URL for download
+      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      setDownloadUrl(url);
+    } catch (err: unknown) {
+      console.error("Failed to edit PDF:", err);
+      if (err instanceof Error) {
+        setError(err.message || "Failed to edit PDF. Please try again.");
+      } else {
+        setError("An unknown error occurred. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <>
       <Navbar />
 
-      {/* Full-screen Loader Overlay */}
       {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
           <div className="flex flex-col items-center">
             <Loader2Icon className="h-12 w-12 animate-spin text-rose-400" />
             <p className="mt-4 text-sm font-semibold uppercase text-gray-700">
-              Extracting pages, please wait...
+              Editing PDF...
             </p>
           </div>
         </div>
       )}
 
-      {/* Main content container */}
       <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
-        {/* Main content area */}
         <main className="flex-1 p-4 md:p-8 flex flex-col items-center text-center">
           <div className="w-full max-w-2xl mx-auto text-left">
             <Breadcrumb>
@@ -169,18 +174,17 @@ export default function PDFExtractor() {
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
                   <BreadcrumbPage className="text-sm font-semibold uppercase">
-                    Extract PDF Pages
+                    Edit PDF
                   </BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-
           <h1 className="text-4xl font-extrabold uppercase mt-6">
-            PDF Hub - Extract PDF Pages
+            PDF Hub - Edit PDF
           </h1>
           <p className="text-xs font-semibold uppercase mt-2 mb-8 text-zinc-600">
-            Extract specific pages from your PDF document.
+            Add text to your PDF document.
           </p>
 
           <input
@@ -191,7 +195,6 @@ export default function PDFExtractor() {
             className="hidden"
           />
 
-          {/* Conditional Rendering based on file and downloadUrl state */}
           {!file ? (
             <div
               className={cn(
@@ -214,7 +217,6 @@ export default function PDFExtractor() {
             </div>
           ) : (
             <div className="w-full max-w-2xl mt-8 p-6 rounded-xl bg-white shadow-lg border border-gray-200 space-y-6">
-              {/* File Info */}
               <div className="flex items-center justify-between text-left">
                 <div className="flex items-center space-x-2">
                   <CheckCircle2Icon className="w-5 h-5 text-green-500" />
@@ -225,11 +227,10 @@ export default function PDFExtractor() {
                     </span>
                   </p>
                 </div>
-                {/* Remove File Button */}
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={resetState}
+                  onClick={resetState} // Use resetState here
                   className="p-1 h-auto text-red-500 hover:bg-red-50 hover:text-red-700 transition-all"
                 >
                   <CircleXIcon className="h-5 w-5" />
@@ -237,32 +238,32 @@ export default function PDFExtractor() {
               </div>
               <Separator />
 
-              {/* Pages to Extract Section */}
-              <div className="text-left space-y-2">
-                <Label
-                  htmlFor="pagesToKeep"
-                  className="text-sm font-semibold uppercase"
+              {/* Text Input Section */}
+              <div className="text-left space-y-4">
+                <label
+                  htmlFor="text-input"
+                  className="block text-sm font-semibold uppercase text-gray-700"
                 >
-                  Pages to Extract (e.g., 1, 3-5, 8)
-                </Label>
-                <Input
+                  Text to add to the PDF
+                </label>
+                <input
+                  id="text-input"
                   type="text"
-                  id="pagesToKeep"
-                  value={pagesToKeep}
-                  onChange={(e) => setPagesToKeep(e.target.value)}
-                  placeholder="e.g., 1, 3-5, 8"
-                  className="mt-2 text-center"
+                  value={textToAdd}
+                  onChange={(e) => setTextToAdd(e.target.value)}
+                  className="w-full p-2 border rounded-md focus:ring focus:ring-rose-400 focus:outline-none"
+                  placeholder="Enter your text here..."
                 />
               </div>
 
               {error && (
-                <div className="w-full p-4 rounded-lg bg-red-50 border border-red-300 text-red-600 text-sm font-semibold uppercase text-left">
+                <div className="p-4 rounded-lg bg-red-50 border border-red-300 w-full text-red-600 text-sm font-semibold uppercase text-left">
                   <p>{error}</p>
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <div className="flex justify-center pt-4 md:space-x-4 gap-4 flex-wrap ">
+              {/* Action Buttons based on downloadUrl state */}
+              <div className="flex justify-center pt-4 md:space-x-4 gap-4 flex-wrap">
                 {downloadUrl ? (
                   <>
                     <Button
@@ -271,10 +272,10 @@ export default function PDFExtractor() {
                     >
                       <a
                         href={downloadUrl}
-                        download={`extracted-${file.name}`}
+                        download={`edited-${file?.name}`}
                         className="text-sm font-semibold uppercase"
                       >
-                        Download Extracted PDF
+                        Download Edited PDF
                       </a>
                     </Button>
                     <Button
@@ -283,34 +284,34 @@ export default function PDFExtractor() {
                       className="ring-2 ring-inset ring-gray-400 text-sm font-semibold uppercase"
                     >
                       <Repeat2Icon className="mr-2 h-4 w-4" />
-                      Extract another
+                      Edit another
                     </Button>
                   </>
                 ) : (
                   <Button
-                    onClick={handleSubmit}
-                    disabled={!file || !pagesToKeep.trim() || loading}
-                    variant={"outline"}
+                    onClick={handleEditPDF}
+                    disabled={loading || !file || !textToAdd.trim()}
                     className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase"
+                    variant={"outline"}
                   >
                     {loading ? (
                       <>
                         <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-                        Extracting...
+                        Adding Text...
                       </>
                     ) : (
-                      "Extract Pages"
+                      "Add Text to PDF"
                     )}
                   </Button>
                 )}
               </div>
             </div>
           )}
-        </main>
 
-        {/* Sidebar Container */}
+          {/* Download link is now part of the conditional rendering above */}
+        </main>
         <aside className="md:w-[25%] p-4 bg-gray-100 border-l border-gray-200">
-          <MoreToolsSidebar currentPage={"/extract-pdf-pages"} />
+          <MoreToolsSidebar currentPage={"/edit-pdf"} />
         </aside>
       </div>
       <Footer />

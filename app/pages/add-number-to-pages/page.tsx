@@ -397,3 +397,5 @@ export default function AddPageNumbers() {
     </>
   );
 }
+
+// The video is a tutorial that explains how to debug and solve the "unused variable" warnings and errors often encountered with React and ESLint.

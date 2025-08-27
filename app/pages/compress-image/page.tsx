@@ -18,7 +18,6 @@ import { Separator } from "@/components/ui/separator";
 import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
-import React from "react";
 
 export default function CompressImagePage() {
   const [file, setFile] = useState<File | null>(null);
@@ -90,9 +89,13 @@ export default function CompressImagePage() {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error compressing image:", err);
-      setError(err.message || "Failed to compress image. Please try again.");
+      if (err instanceof Error) {
+        setError(err.message || "Failed to compress image. Please try again.");
+      } else {
+        setError("An unknown error occurred.");
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -229,7 +232,7 @@ export default function CompressImagePage() {
                       htmlFor="quality-input"
                       className="text-sm font-semibold uppercase"
                     >
-                      Quality (%)
+                      Quality (Percentage)
                     </Label>
                     <div className="flex items-center space-x-2">
                       <Input

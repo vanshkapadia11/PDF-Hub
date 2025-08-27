@@ -143,9 +143,13 @@ export default function CompressPDF() {
         compressedSize: blob.size,
         reduction: Math.round(((file.size - blob.size) / file.size) * 100),
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error compressing PDF:", err);
-      setError(err.message || "Failed to compress PDF. Please try again.");
+      if (err instanceof Error) {
+        setError(err.message || "Failed to compress PDF. Please try again.");
+      } else {
+        setError("An unknown error occurred.");
+      }
     } finally {
       setIsCompressing(false);
     }
@@ -331,7 +335,7 @@ export default function CompressPDF() {
                 <TabsContent value="custom" className="space-y-6">
                   <div>
                     <Label className="text-sm font-semibold uppercase mb-2 block">
-                      Quality Level: {customQuality}%
+                      Quality Level: {customQuality}perc
                     </Label>
                     <Slider
                       value={[customQuality]}

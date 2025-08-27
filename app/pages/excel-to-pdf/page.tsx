@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { ChangeEvent, DragEvent, FormEvent } from "react";
 import axios from "axios";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,12 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { CircleXIcon, Loader2Icon, CheckCircle2Icon } from "lucide-react";
+import {
+  CircleXIcon,
+  Loader2Icon,
+  CheckCircle2Icon,
+  Repeat2Icon,
+} from "lucide-react";
 import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
@@ -26,6 +31,23 @@ export default function ExcelToPdf() {
   const [downloadUrl, setDownloadUrl] = useState<string>("");
   const [dragActive, setDragActive] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Clean up object URL to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (downloadUrl) URL.revokeObjectURL(downloadUrl);
+    };
+  }, [downloadUrl]);
+
+  const resetState = () => {
+    setFile(null);
+    setLoading(false);
+    setError("");
+    setDownloadUrl("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -48,9 +70,18 @@ export default function ExcelToPdf() {
 
       const url = window.URL.createObjectURL(new Blob([res.data]));
       setDownloadUrl(url);
-    } catch (err) {
-      console.error(err);
-      setError("Conversion failed. Please try a different file.");
+    } catch (err: unknown) {
+      console.error("Conversion failed:", err);
+      // More specific error handling
+      if (axios.isAxiosError(err)) {
+        setError(
+          err.message || "Conversion failed. Please try a different file."
+        );
+      } else if (err instanceof Error) {
+        setError(err.message || "An unexpected error occurred.");
+      } else {
+        setError("An unknown error occurred.");
+      }
     } finally {
       setLoading(false);
     }
@@ -66,6 +97,7 @@ export default function ExcelToPdf() {
     ) {
       setFile(selectedFile);
       setError("");
+      setDownloadUrl(""); // Reset download URL on new file selection
     } else {
       setFile(null);
       setError("Please select a valid Excel file (.xlsx or .xls).");
@@ -84,6 +116,7 @@ export default function ExcelToPdf() {
     ) {
       setFile(droppedFile);
       setError("");
+      setDownloadUrl(""); // Reset download URL on new file drop
     } else {
       setFile(null);
       setError("Please drop a valid Excel file (.xlsx or .xls).");
@@ -98,13 +131,6 @@ export default function ExcelToPdf() {
   const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
-  };
-
-  const removeFile = () => {
-    setFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
   };
 
   return (
@@ -162,59 +188,97 @@ export default function ExcelToPdf() {
             className="hidden"
           />
 
-          {/* Drag & Drop Zone */}
-          <div
-            className={cn(
-              "w-full max-w-2xl h-48 border-2 rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
-              dragActive
-                ? "border-blue-500 text-blue-500 border-dashed"
-                : file
-                ? "border-green-500 text-green-500"
-                : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500 border-dashed"
-            )}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <p className="text-sm font-semibold uppercase">
-              Click to select or drag & drop an Excel file here
-            </p>
-            <p className="text-xs font-semibold uppercase mt-2 text-zinc-600">
-              Accepted formats: .xlsx, .xls
-            </p>
-          </div>
-
-          {/* Options & Action Section */}
-          {file && (
+          {/* Conditional Rendering based on file and downloadUrl state */}
+          {!file ? (
+            <div
+              className={cn(
+                "w-full max-w-2xl h-48 border-2 rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
+                dragActive
+                  ? "border-blue-500 text-blue-500 border-dashed"
+                  : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500 border-dashed"
+              )}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <p className="text-sm font-semibold uppercase">
+                Click to select or drag & drop an Excel file here
+              </p>
+              <p className="text-xs font-semibold uppercase mt-2 text-zinc-600">
+                Accepted formats: .xlsx, .xls
+              </p>
+            </div>
+          ) : (
             <div className="w-full max-w-2xl mt-8 p-6 rounded-xl bg-white shadow-lg border border-gray-200 space-y-6">
               {/* File Info */}
-              <div className="flex items-center text-left">
-                <CheckCircle2Icon className="w-5 h-5 text-green-500 mr-2" />
-                <p className="text-sm font-semibold uppercase">
-                  File Selected:{" "}
-                  <span className="font-normal text-gray-700">{file.name}</span>
-                </p>
+              <div className="flex items-center justify-between text-left">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle2Icon className="w-5 h-5 text-green-500" />
+                  <p className="text-sm font-semibold uppercase">
+                    File Selected:{" "}
+                    <span className="font-normal text-gray-700">
+                      {file.name}
+                    </span>
+                  </p>
+                </div>
+                {/* Remove File Button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={resetState}
+                  className="p-1 h-auto text-red-500 hover:bg-red-50 hover:text-red-700 transition-all"
+                >
+                  <CircleXIcon className="h-5 w-5" />
+                </Button>
               </div>
               <Separator />
 
-              {/* Convert Button */}
-              <div className="flex justify-center pt-4">
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!file || loading}
-                  variant={"outline"}
-                  className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-                      Converting...
-                    </>
-                  ) : (
-                    "Convert to PDF"
-                  )}
-                </Button>
+              {/* Action Buttons */}
+              <div className="flex justify-center pt-4 md:space-x-4 gap-4 flex-wrap">
+                {downloadUrl ? (
+                  <>
+                    <Button
+                      variant={"outline"}
+                      className="ring-2 ring-inset ring-green-500"
+                    >
+                      <a
+                        href={downloadUrl}
+                        download={`${file.name.replace(
+                          /\.(xlsx|xls)$/,
+                          ""
+                        )}.pdf`}
+                        className="text-sm font-semibold uppercase"
+                      >
+                        Download PDF
+                      </a>
+                    </Button>
+                    <Button
+                      onClick={resetState}
+                      variant={"outline"}
+                      className="ring-2 ring-inset ring-gray-400 text-sm font-semibold uppercase"
+                    >
+                      <Repeat2Icon className="mr-2 h-4 w-4" />
+                      Convert another
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={!file || loading}
+                    variant={"outline"}
+                    className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                        Converting...
+                      </>
+                    ) : (
+                      "Convert to PDF"
+                    )}
+                  </Button>
+                )}
               </div>
             </div>
           )}
@@ -223,30 +287,6 @@ export default function ExcelToPdf() {
           {error && (
             <div className="w-full max-w-2xl mt-8 p-4 rounded-lg bg-red-50 border border-red-300 text-red-600 text-sm font-semibold uppercase text-left">
               <p>{error}</p>
-            </div>
-          )}
-
-          {/* Download Link */}
-          {downloadUrl && (
-            <div className="w-full max-w-2xl mt-8 p-6 rounded-lg bg-white shadow-lg border border-green-200 text-center">
-              <h3 className="text-lg font-semibold uppercase mb-4 text-green-700">
-                Conversion Successful!
-              </h3>
-              <p className="text-sm font-semibold uppercase text-zinc-600">
-                Your converted PDF is ready to download.
-              </p>
-              <Button
-                variant={"outline"}
-                className="mt-4 ring-2 ring-inset ring-green-500"
-              >
-                <a
-                  href={downloadUrl}
-                  download="converted-document.pdf"
-                  className="text-sm font-semibold uppercase"
-                >
-                  Download The PDF
-                </a>
-              </Button>
             </div>
           )}
         </main>

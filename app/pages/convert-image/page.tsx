@@ -20,7 +20,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
-import { Loader2Icon, CheckCircle2Icon } from "lucide-react";
+import { Loader2Icon, CheckCircle2Icon, Repeat2Icon } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
@@ -34,12 +34,21 @@ export default function ConvertImagePage() {
   const [dragActive, setDragActive] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Clean up object URL
+  // Clean up object URL when component unmounts or downloadUrl changes
   useEffect(() => {
     return () => {
       if (downloadUrl) URL.revokeObjectURL(downloadUrl);
     };
   }, [downloadUrl]);
+
+  const resetState = () => {
+    setFile(null);
+    setDownloadUrl("");
+    setError("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     setError("");
@@ -130,9 +139,13 @@ export default function ConvertImagePage() {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error converting image:", err);
-      setError(err.message || "Failed to convert image. Please try again.");
+      if (err instanceof Error) {
+        setError(err.message || "Failed to convert image. Please try again.");
+      } else {
+        setError("An unknown error occurred. Please try again.");
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -201,30 +214,39 @@ export default function ConvertImagePage() {
             className="hidden"
           />
 
-          {/* Drag & Drop Zone */}
-          <div
-            className={cn(
-              "w-full max-w-2xl h-48 border-2 rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
-              dragActive
-                ? "border-blue-500 text-blue-500 border-dashed"
-                : file
-                ? "border-green-500 text-green-500"
-                : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500 border-dashed"
-            )}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <p className="text-sm font-semibold uppercase">
-              Click to select or drag & drop an image here
-            </p>
-            {file && (
-              <p className="mt-2 text-sm font-medium">
-                Selected: <span className="font-bold">{file.name}</span>
+          {/* Drag & Drop Zone or File Info */}
+          {!downloadUrl ? (
+            <div
+              className={cn(
+                "w-full max-w-2xl h-48 border-2 rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
+                dragActive
+                  ? "border-blue-500 text-blue-500 border-dashed"
+                  : file
+                  ? "border-green-500 text-green-500"
+                  : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500 border-dashed"
+              )}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <p className="text-sm font-semibold uppercase">
+                Click to select or drag & drop an image here
               </p>
-            )}
-          </div>
+              {file && (
+                <p className="mt-2 text-sm font-medium">
+                  Selected: <span className="font-bold">{file.name}</span>
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="w-full max-w-2xl h-48 border-2 rounded-lg flex flex-col items-center justify-center border-green-500 text-green-500">
+              <CheckCircle2Icon className="h-12 w-12 mb-2" />
+              <p className="text-sm font-semibold uppercase">
+                Conversion Successful!
+              </p>
+            </div>
+          )}
 
           {/* Options & Action Section */}
           {file && (
@@ -267,48 +289,49 @@ export default function ConvertImagePage() {
                 </div>
               )}
 
-              {/* Convert Button */}
-              <div className="flex justify-center pt-4">
-                <Button
-                  onClick={convertImage}
-                  disabled={isProcessing}
-                  variant={"outline"}
-                  className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase"
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-                      Converting...
-                    </>
-                  ) : (
-                    "Convert Image"
-                  )}
-                </Button>
+              {/* Action Buttons */}
+              <div className="flex justify-center pt-4 md:space-x-4 gap-4 flex-wrap">
+                {downloadUrl ? (
+                  <>
+                    <Button
+                      variant={"outline"}
+                      className="ring-2 ring-inset ring-green-500"
+                    >
+                      <a
+                        href={downloadUrl}
+                        download={getDownloadFilename()}
+                        className="text-sm font-semibold uppercase"
+                      >
+                        Download Converted Image
+                      </a>
+                    </Button>
+                    <Button
+                      onClick={resetState}
+                      variant={"outline"}
+                      className="ring-2 ring-inset ring-gray-400 text-sm font-semibold uppercase"
+                    >
+                      <Repeat2Icon className="mr-2 h-4 w-4" />
+                      Convert another
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    onClick={convertImage}
+                    disabled={isProcessing}
+                    variant={"outline"}
+                    className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                        Converting...
+                      </>
+                    ) : (
+                      "Convert Image"
+                    )}
+                  </Button>
+                )}
               </div>
-            </div>
-          )}
-
-          {/* Download Link */}
-          {downloadUrl && (
-            <div className="w-full max-w-2xl mt-8 p-6 rounded-lg bg-white shadow-lg border border-green-200 text-center">
-              <h3 className="text-lg font-semibold uppercase mb-4 text-green-700">
-                Success!
-              </h3>
-              <p className="text-sm font-semibold uppercase text-zinc-600">
-                Your converted image is ready to download.
-              </p>
-              <Button
-                variant={"outline"}
-                className="mt-4 ring-2 ring-inset ring-green-500"
-              >
-                <a
-                  href={downloadUrl}
-                  download={getDownloadFilename()}
-                  className="text-sm font-semibold uppercase"
-                >
-                  Download Converted Image
-                </a>
-              </Button>
             </div>
           )}
         </main>

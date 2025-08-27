@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import type { ChangeEvent, DragEvent, FormEvent } from "react";
 import axios from "axios";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ import {
   Loader2Icon,
   CheckCircle2Icon,
   GripVerticalIcon,
+  Repeat2Icon,
 } from "lucide-react";
 import {
   DndContext,
@@ -139,15 +140,12 @@ export default function PDFOrganizer() {
     })
   );
 
+  // Load PDF.js library and set worker source
   useEffect(() => {
     const loadPdfjs = async () => {
       try {
-        // Import the main PDF.js library
         const pdfjsLib = await import("pdfjs-dist/build/pdf");
-
-        // Set the worker source to the correct file name with the .mjs extension
         pdfjsLib.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
-
         setPdfjs(pdfjsLib);
         setIsPdfjsLoaded(true);
       } catch (error) {
@@ -158,7 +156,32 @@ export default function PDFOrganizer() {
     loadPdfjs();
   }, []);
 
-  const renderPagePreviews = async (pdfDoc: any) => {
+  // Clean up object URLs to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (downloadUrl) {
+        URL.revokeObjectURL(downloadUrl);
+      }
+      pages.forEach((page) => {
+        if (page.preview) {
+          URL.revokeObjectURL(page.preview);
+        }
+      });
+    };
+  }, [downloadUrl, pages]);
+
+  // Unified function to reset all state
+  const resetState = () => {
+    setFile(null);
+    setPages([]);
+    setDownloadUrl("");
+    setError("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const renderPagePreviews = useCallback(async (pdfDoc: any) => {
     const previewPromises: Promise<string | null>[] = [];
     const scale = 0.5;
 
@@ -183,15 +206,13 @@ export default function PDFOrganizer() {
       );
     }
     return Promise.all(previewPromises);
-  };
+  }, []);
 
   const handleFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile && selectedFile.type === "application/pdf") {
+      resetState();
       setFile(selectedFile);
-      setError("");
-      setDownloadUrl("");
-      setPages([]);
       setLoading(true);
 
       try {
@@ -203,10 +224,6 @@ export default function PDFOrganizer() {
         const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
         const numPages = pdf.numPages;
 
-        // Start rendering previews, but don't wait for them
-        const previewsPromise = renderPagePreviews(pdf);
-
-        // Immediately set pages with a placeholder while previews load
         const initialPages: PDFPage[] = Array.from(
           { length: numPages },
           (_, i) => ({
@@ -217,25 +234,27 @@ export default function PDFOrganizer() {
         );
         setPages(initialPages);
 
-        // Update pages as previews become available
-        const previews = await previewsPromise;
+        const previews = await renderPagePreviews(pdf);
         setPages((prevPages) => {
           return prevPages.map((page, i) => ({
             ...page,
             preview: previews[i],
           }));
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Error processing PDF:", error);
-        setError("Could not process PDF completely. Please try again.");
-        // If everything fails, clear the pages
+        if (error instanceof Error) {
+          setError(error.message || "Could not process PDF. Please try again.");
+        } else {
+          setError("An unknown error occurred while processing the PDF.");
+        }
         setPages([]);
+        setFile(null);
       } finally {
         setLoading(false);
       }
     } else {
-      setFile(null);
-      setPages([]);
+      resetState();
       setError("Please select a valid PDF file.");
     }
   };
@@ -282,12 +301,22 @@ export default function PDFOrganizer() {
 
       const url = window.URL.createObjectURL(new Blob([res.data]));
       setDownloadUrl(url);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(
-        err.response?.data?.error ||
-          "Failed to organize PDF pages. Please try again."
-      );
+      if (axios.isAxiosError(err) && err.response?.data) {
+        const reader = new FileReader();
+        reader.onload = function () {
+          try {
+            const errorData = JSON.parse(reader.result as string);
+            setError(errorData.error || "Failed to organize PDF pages.");
+          } catch {
+            setError("Failed to organize PDF pages. Please try again.");
+          }
+        };
+        reader.readAsText(err.response.data);
+      } else {
+        setError("Failed to organize PDF pages. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -302,7 +331,7 @@ export default function PDFOrganizer() {
         target: { files: [droppedFile] },
       } as ChangeEvent<HTMLInputElement>);
     } else {
-      setFile(null);
+      resetState();
       setError("Please drop a valid PDF file.");
     }
   };
@@ -315,22 +344,6 @@ export default function PDFOrganizer() {
   const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
-  };
-
-  const removeFile = () => {
-    setFile(null);
-    setPages([]);
-    setDownloadUrl("");
-    setError("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  const removePage = (idToRemove: string) => {
-    setPages((prevPages) => prevPages.filter((page) => page.id !== idToRemove));
-    setError("");
-    setDownloadUrl("");
   };
 
   return (
@@ -388,8 +401,8 @@ export default function PDFOrganizer() {
             className="hidden"
           />
 
-          {/* Drag & Drop Zone */}
-          {!file && (
+          {/* Conditional Rendering based on files and downloadUrl state */}
+          {!file || downloadUrl ? (
             <div
               className={cn(
                 "w-full max-w-2xl h-48 border-2 rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
@@ -414,10 +427,7 @@ export default function PDFOrganizer() {
                 </p>
               )}
             </div>
-          )}
-
-          {/* Organizer UI */}
-          {file && (
+          ) : (
             <div className="w-full max-w-2xl mt-8 p-6 rounded-xl bg-white shadow-lg border border-gray-200 space-y-6">
               <div className="flex items-center justify-between text-left">
                 <div className="flex items-center space-x-2">
@@ -432,7 +442,7 @@ export default function PDFOrganizer() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={removeFile}
+                  onClick={resetState}
                   className="p-1 h-auto text-red-500 hover:bg-red-50 hover:text-red-700 transition-all"
                 >
                   <CircleXIcon className="h-5 w-5" />
@@ -441,7 +451,7 @@ export default function PDFOrganizer() {
 
               <Separator />
 
-              {pages.length > 0 && (
+              {pages.length > 0 ? (
                 <div className="text-left">
                   <h3 className="text-lg font-semibold uppercase mb-4">
                     Drag and drop pages to reorder ({pages.length} pages)
@@ -468,27 +478,28 @@ export default function PDFOrganizer() {
                       </SortableContext>
                     </DndContext>
                   </div>
+                  <div className="flex justify-center pt-4">
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={loading || !isPdfjsLoaded}
+                      variant={"outline"}
+                      className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                          Organizing...
+                        </>
+                      ) : (
+                        "Organize PDF"
+                      )}
+                    </Button>
+                  </div>
                 </div>
-              )}
-
-              {pages.length > 0 && (
-                <div className="flex justify-center pt-4">
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={loading || !isPdfjsLoaded}
-                    variant={"outline"}
-                    className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-                        Organizing...
-                      </>
-                    ) : (
-                      "Organize PDF"
-                    )}
-                  </Button>
-                </div>
+              ) : (
+                <p className="text-sm font-semibold uppercase text-gray-500 text-center">
+                  No pages to display. Try uploading a different PDF.
+                </p>
               )}
             </div>
           )}
@@ -509,18 +520,28 @@ export default function PDFOrganizer() {
               <p className="text-sm font-semibold uppercase text-zinc-600">
                 Your reorganized PDF is ready to download.
               </p>
-              <Button
-                variant={"outline"}
-                className="mt-4 ring-2 ring-inset ring-green-500"
-              >
-                <a
-                  href={downloadUrl}
-                  download="organized-document.pdf"
-                  className="text-sm font-semibold uppercase"
+              <div className="flex justify-center mt-4 space-x-4">
+                <Button
+                  variant={"outline"}
+                  className="ring-2 ring-inset ring-green-500"
                 >
-                  Download The PDF
-                </a>
-              </Button>
+                  <a
+                    href={downloadUrl}
+                    download="organized-document.pdf"
+                    className="text-sm font-semibold uppercase"
+                  >
+                    Download The PDF
+                  </a>
+                </Button>
+                <Button
+                  onClick={resetState}
+                  variant={"outline"}
+                  className="ring-2 ring-inset ring-gray-400 text-sm font-semibold uppercase"
+                >
+                  <Repeat2Icon className="mr-2 h-4 w-4" />
+                  Organize another
+                </Button>
+              </div>
             </div>
           )}
         </main>

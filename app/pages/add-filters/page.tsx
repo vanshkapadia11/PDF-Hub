@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +20,6 @@ import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
 import Image from "next/image";
-import React from "react";
 
 export default function FilterImagePage() {
   const [file, setFile] = useState<File | null>(null);
@@ -35,7 +35,7 @@ export default function FilterImagePage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     setError("");
     const selectedFile = e.target.files?.[0] || null;
     if (selectedFile && selectedFile.type.startsWith("image/")) {
@@ -47,7 +47,7 @@ export default function FilterImagePage() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: parseFloat(value) }));
   };
@@ -82,9 +82,13 @@ export default function FilterImagePage() {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message || "Failed to apply filters.");
+      if (err instanceof Error) {
+        setError(err.message || "Failed to apply filters.");
+      } else {
+        setError("An unknown error occurred.");
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -154,7 +158,7 @@ export default function FilterImagePage() {
                 : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500 border-dashed"
             )}
             onClick={() => fileInputRef.current?.click()}
-            onDrop={(e: React.DragEvent<HTMLDivElement>) => {
+            onDrop={(e: DragEvent<HTMLDivElement>) => {
               e.preventDefault();
               handleFileChange({
                 target: { files: e.dataTransfer.files } as EventTarget &
@@ -182,21 +186,22 @@ export default function FilterImagePage() {
                   <h2 className="text-xl font-semibold uppercase text-gray-700">
                     Filters
                   </h2>
-                  {["brightness", "contrast", "saturate"].map((filter) => (
-                    <div key={filter} className="space-y-2">
+                  {Object.entries(filters).map(([filterName, value]) => (
+                    <div key={filterName} className="space-y-2">
                       <Label className="text-sm font-semibold uppercase flex justify-between">
                         <span>
-                          {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                          {filterName.charAt(0).toUpperCase() +
+                            filterName.slice(1)}
                         </span>
-                        <span>{filters[filter].toFixed(2)}</span>
+                        <span>{value.toFixed(2)}</span>
                       </Label>
                       <Input
                         type="range"
-                        name={filter}
+                        name={filterName}
                         min="0"
                         max="2"
                         step="0.01"
-                        value={filters[filter]}
+                        value={value}
                         onChange={handleChange}
                         className="w-full accent-rose-500 cursor-pointer"
                       />
@@ -214,6 +219,8 @@ export default function FilterImagePage() {
                       <Image
                         src={previewUrl}
                         alt="Live preview of filtered image"
+                        width={300}
+                        height={300}
                         className="max-w-full max-h-full object-contain"
                         style={{
                           filter: `brightness(${filters.brightness}) contrast(${filters.contrast}) saturate(${filters.saturate})`,

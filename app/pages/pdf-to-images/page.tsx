@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
-import type { ChangeEvent, DragEvent, FormEvent } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -20,6 +20,7 @@ import {
   XCircleIcon,
   CheckCircle2Icon,
   DownloadIcon,
+  Repeat2Icon,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
@@ -33,30 +34,49 @@ export default function PdfToImagesPage() {
   const [downloadUrl, setDownloadUrl] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+  // Unified function to reset all state
+  const resetState = useCallback(() => {
+    setFile(null);
     setMessage("");
     setDownloadUrl("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    // Clean up previous URL if it exists
+    if (downloadUrl) {
+      URL.revokeObjectURL(downloadUrl);
+    }
+  }, [downloadUrl]);
+
+  // Effect to clean up the download URL when component unmounts or URL changes
+  useEffect(() => {
+    return () => {
+      if (downloadUrl) {
+        URL.revokeObjectURL(downloadUrl);
+      }
+    };
+  }, [downloadUrl]);
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    resetState();
     const selectedFile = e.target.files?.[0];
     if (selectedFile && selectedFile.type === "application/pdf") {
       setFile(selectedFile);
     } else {
       setMessage("Please select a valid PDF file.");
-      setFile(null);
     }
   };
 
   const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
-    setMessage("");
-    setDownloadUrl("");
+    resetState();
     const droppedFile = event.dataTransfer.files[0];
 
     if (droppedFile && droppedFile.type === "application/pdf") {
       setFile(droppedFile);
     } else {
       setMessage("Please drop a valid PDF file.");
-      setFile(null);
     }
   };
 
@@ -70,8 +90,7 @@ export default function PdfToImagesPage() {
     setDragActive(false);
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (!file) {
       setMessage("Please select a file first.");
       return;
@@ -104,15 +123,6 @@ export default function PdfToImagesPage() {
       setMessage("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const removeFile = () => {
-    setFile(null);
-    setMessage("");
-    setDownloadUrl("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
     }
   };
 
@@ -163,7 +173,7 @@ export default function PdfToImagesPage() {
           />
 
           {/* Drop Zone / File Info */}
-          {!file ? (
+          {!file || downloadUrl ? (
             <div
               className={cn(
                 "w-full max-w-2xl h-48 border-2 rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
@@ -199,7 +209,7 @@ export default function PdfToImagesPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={removeFile}
+                  onClick={resetState}
                   className="p-1 h-auto text-red-500 hover:bg-red-50 hover:text-red-700 transition-all rounded-full"
                   aria-label="Remove file"
                 >
@@ -209,9 +219,7 @@ export default function PdfToImagesPage() {
               <Separator />
               <div className="flex justify-center">
                 <Button
-                  onClick={(e) =>
-                    handleSubmit(e as unknown as FormEvent<HTMLFormElement>)
-                  }
+                  onClick={handleSubmit}
                   disabled={isLoading}
                   variant={"outline"}
                   className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase"
@@ -254,22 +262,32 @@ export default function PdfToImagesPage() {
                   Your ZIP file is ready for download.
                 </p>
               </div>
-              <Button
-                variant={"outline"}
-                className="mt-4 ring-2 ring-inset ring-green-500"
-              >
-                <a
-                  href={downloadUrl}
-                  download={`converted-${file?.name.replace(
-                    ".pdf",
-                    "-images.zip"
-                  )}`}
-                  className="text-sm font-semibold uppercase text-green-700"
+              <div className="flex justify-center space-x-4 mt-4">
+                <Button
+                  variant={"outline"}
+                  className="ring-2 ring-inset ring-green-500"
                 >
-                  <DownloadIcon className="mr-2 h-4 w-4" />
-                  Download ZIP File
-                </a>
-              </Button>
+                  <a
+                    href={downloadUrl}
+                    download={`converted-${file?.name.replace(
+                      ".pdf",
+                      "-images.zip"
+                    )}`}
+                    className="text-sm font-semibold uppercase text-green-700 flex items-center"
+                  >
+                    <DownloadIcon className="mr-2 h-4 w-4" />
+                    Download ZIP File
+                  </a>
+                </Button>
+                <Button
+                  onClick={resetState}
+                  variant={"outline"}
+                  className="ring-2 ring-inset ring-gray-400 text-sm font-semibold uppercase"
+                >
+                  <Repeat2Icon className="mr-2 h-4 w-4" />
+                  Convert another
+                </Button>
+              </div>
             </div>
           )}
         </main>

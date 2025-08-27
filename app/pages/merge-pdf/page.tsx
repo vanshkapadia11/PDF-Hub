@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { ChangeEvent, DragEvent, FormEvent } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -19,6 +19,7 @@ import {
   FileIcon,
   Trash2Icon,
   GripVerticalIcon,
+  Repeat2Icon,
 } from "lucide-react";
 import {
   DndContext,
@@ -110,6 +111,23 @@ export default function PDFMerger() {
     })
   );
 
+  // Clean up object URL when component unmounts or downloadUrl changes
+  useEffect(() => {
+    return () => {
+      if (downloadUrl) URL.revokeObjectURL(downloadUrl);
+    };
+  }, [downloadUrl]);
+
+  const resetState = () => {
+    setFiles([]);
+    setLoading(false);
+    setError("");
+    setDownloadUrl("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
     const newFiles = Array.from(event.target.files || []).filter(
       (file) => file.type === "application/pdf"
@@ -117,6 +135,7 @@ export default function PDFMerger() {
     if (newFiles.length > 0) {
       setFiles((prev) => [...prev, ...newFiles]);
       setError("");
+      setDownloadUrl("");
     } else {
       setError("Only PDF files are accepted.");
     }
@@ -131,6 +150,7 @@ export default function PDFMerger() {
     if (droppedFiles.length > 0) {
       setFiles((prev) => [...prev, ...droppedFiles]);
       setError("");
+      setDownloadUrl("");
     } else {
       setError("Only PDF files are accepted.");
     }
@@ -194,7 +214,7 @@ export default function PDFMerger() {
         try {
           const errorData = await response.json();
           errorMessage = errorData.message || errorMessage;
-        } catch (e) {
+        } catch {
           errorMessage = response.statusText || errorMessage;
         }
         throw new Error(errorMessage);
@@ -203,9 +223,14 @@ export default function PDFMerger() {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      // Use unknown for type safety
       console.error("Error merging PDFs:", error);
-      setError(error.message || "Failed to merge PDFs. Please try again.");
+      if (error instanceof Error) {
+        setError(error.message || "Failed to merge PDFs. Please try again.");
+      } else {
+        setError("An unknown error occurred.");
+      }
     } finally {
       setLoading(false);
     }
@@ -267,31 +292,28 @@ export default function PDFMerger() {
             className="hidden"
           />
 
-          {/* Drag & Drop Zone */}
-          <div
-            className={cn(
-              "w-full max-w-2xl h-48 border-2 rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
-              dragActive
-                ? "border-blue-500 text-blue-500 border-dashed"
-                : files.length > 0
-                ? "border-green-500 text-green-500"
-                : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500 border-dashed"
-            )}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <p className="text-sm font-semibold uppercase">
-              Click to select or drag & drop PDF files here
-            </p>
-            <p className="text-xs font-semibold uppercase mt-2 text-zinc-600">
-              Select at least 2 PDF files.
-            </p>
-          </div>
-
-          {/* Options & Action Section */}
-          {files.length > 0 && (
+          {/* Conditional Rendering based on files and downloadUrl state */}
+          {!files.length || downloadUrl ? (
+            <div
+              className={cn(
+                "w-full max-w-2xl h-48 border-2 rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
+                dragActive
+                  ? "border-blue-500 text-blue-500 border-dashed"
+                  : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500 border-dashed"
+              )}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <p className="text-sm font-semibold uppercase">
+                Click to select or drag & drop PDF files here
+              </p>
+              <p className="text-xs font-semibold uppercase mt-2 text-zinc-600">
+                Select at least 2 PDF files.
+              </p>
+            </div>
+          ) : (
             <div className="w-full max-w-2xl mt-8 p-6 rounded-xl bg-white shadow-lg border border-gray-200 space-y-6">
               {/* File List */}
               <div className="text-left space-y-4">
@@ -362,18 +384,28 @@ export default function PDFMerger() {
               <p className="text-sm font-semibold uppercase text-zinc-600">
                 Your combined PDF is ready to download.
               </p>
-              <Button
-                variant={"outline"}
-                className="mt-4 ring-2 ring-inset ring-green-500"
-              >
-                <a
-                  href={downloadUrl}
-                  download="merged-document.pdf"
-                  className="text-sm font-semibold uppercase"
+              <div className="flex justify-center mt-4 md:space-x-4 gap-4 flex-wrap">
+                <Button
+                  variant={"outline"}
+                  className="ring-2 ring-inset ring-green-500"
                 >
-                  Download The PDF
-                </a>
-              </Button>
+                  <a
+                    href={downloadUrl}
+                    download="merged-document.pdf"
+                    className="text-sm font-semibold uppercase"
+                  >
+                    Download The PDF
+                  </a>
+                </Button>
+                <Button
+                  onClick={resetState}
+                  variant={"outline"}
+                  className="ring-2 ring-inset ring-gray-400 text-sm font-semibold uppercase"
+                >
+                  <Repeat2Icon className="mr-2 h-4 w-4" />
+                  Merge another
+                </Button>
+              </div>
             </div>
           )}
         </main>

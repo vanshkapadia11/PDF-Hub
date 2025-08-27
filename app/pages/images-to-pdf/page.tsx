@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { ChangeEvent, DragEvent, FormEvent } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -17,6 +17,8 @@ import {
   Loader2Icon,
   CheckCircle2Icon,
   Image as ImageIcon,
+  CircleXIcon,
+  Repeat2Icon,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
@@ -29,6 +31,23 @@ export default function ImagesToPDFConverter() {
   const [downloadUrl, setDownloadUrl] = useState<string>("");
   const [dragActive, setDragActive] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Clean up object URL when component unmounts or downloadUrl changes
+  useEffect(() => {
+    return () => {
+      if (downloadUrl) URL.revokeObjectURL(downloadUrl);
+    };
+  }, [downloadUrl]);
+
+  const resetState = () => {
+    setFiles([]);
+    setLoading(false);
+    setError("");
+    setDownloadUrl("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
@@ -58,7 +77,9 @@ export default function ImagesToPDFConverter() {
         setError("Some dropped files were not images and were ignored.");
       }
     } else {
+      setFiles([]);
       setError("Please drop valid image files.");
+      setDownloadUrl("");
     }
   };
 
@@ -99,11 +120,24 @@ export default function ImagesToPDFConverter() {
         const url = window.URL.createObjectURL(blob);
         setDownloadUrl(url);
       } else {
-        const errorData = await response.json();
-        setError(errorData.message || "Something went wrong.");
+        const errorText = await response.text();
+        try {
+          // Attempt to parse JSON error message from the server
+          const errorData = JSON.parse(errorText);
+          setError(errorData.message || "Something went wrong.");
+        } catch {
+          // Fallback to generic message if JSON parsing fails
+          setError("Something went wrong on the server.");
+        }
       }
-    } catch (err) {
-      setError("Failed to connect to the server.");
+    } catch (err: unknown) {
+      // Use unknown for type safety
+      console.error(err);
+      if (err instanceof Error) {
+        setError(err.message || "Failed to connect to the server.");
+      } else {
+        setError("An unknown error occurred.");
+      }
     } finally {
       setLoading(false);
     }
@@ -160,7 +194,6 @@ export default function ImagesToPDFConverter() {
             Combine your images into a single PDF document.
           </p>
 
-          {/* File Input */}
           <input
             type="file"
             ref={fileInputRef}
@@ -170,31 +203,28 @@ export default function ImagesToPDFConverter() {
             className="hidden"
           />
 
-          {/* Drag & Drop Zone */}
-          <div
-            className={cn(
-              "w-full max-w-2xl h-48 border-2 rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
-              dragActive
-                ? "border-blue-500 text-blue-500 border-dashed"
-                : files.length > 0
-                ? "border-green-500 text-green-500"
-                : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500 border-dashed"
-            )}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <p className="text-sm font-semibold uppercase">
-              Click to select or drag & drop images here
-            </p>
-            <p className="text-xs font-semibold uppercase mt-2 text-zinc-600">
-              Accepted formats: JPG, PNG, etc.
-            </p>
-          </div>
-
-          {/* Options & Action Section */}
-          {files.length > 0 && (
+          {/* Conditional Rendering based on file and downloadUrl state */}
+          {!files.length || downloadUrl ? (
+            <div
+              className={cn(
+                "w-full max-w-2xl h-48 border-2 rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
+                dragActive
+                  ? "border-blue-500 text-blue-500 border-dashed"
+                  : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500 border-dashed"
+              )}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <p className="text-sm font-semibold uppercase">
+                Click to select or drag & drop images here
+              </p>
+              <p className="text-xs font-semibold uppercase mt-2 text-zinc-600">
+                Accepted formats: JPG, PNG, etc.
+              </p>
+            </div>
+          ) : (
             <div className="w-full max-w-2xl mt-8 p-6 rounded-xl bg-white shadow-lg border border-gray-200 space-y-6">
               {/* File List */}
               <div className="text-left">
@@ -217,21 +247,9 @@ export default function ImagesToPDFConverter() {
                         variant="ghost"
                         size="sm"
                         onClick={() => removeFile(file)}
-                        className="p-1 h-auto text-red-500 hover:text-red-700 transition-all"
+                        className="p-1 h-auto text-red-500 hover:bg-red-50 hover:text-red-700 transition-all"
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M18 6L6 18M6 6l12 12" />
-                        </svg>
+                        <CircleXIcon className="h-5 w-5" />
                       </Button>
                     </li>
                   ))}
@@ -276,18 +294,28 @@ export default function ImagesToPDFConverter() {
               <p className="text-sm font-semibold uppercase text-zinc-600">
                 Your new PDF is ready to download.
               </p>
-              <Button
-                variant={"outline"}
-                className="mt-4 ring-2 ring-inset ring-green-500"
-              >
-                <a
-                  href={downloadUrl}
-                  download="images-converted.pdf"
-                  className="text-sm font-semibold uppercase"
+              <div className="flex justify-center mt-4 md:space-x-4 flex-wrap gap-4">
+                <Button
+                  variant={"outline"}
+                  className="ring-2 ring-inset ring-green-500"
                 >
-                  Download The PDF
-                </a>
-              </Button>
+                  <a
+                    href={downloadUrl}
+                    download="images-converted.pdf"
+                    className="text-sm font-semibold uppercase"
+                  >
+                    Download The PDF
+                  </a>
+                </Button>
+                <Button
+                  onClick={resetState}
+                  variant={"outline"}
+                  className="ring-2 ring-inset ring-gray-400 text-sm font-semibold uppercase"
+                >
+                  <Repeat2Icon className="mr-2 h-4 w-4" />
+                  Convert another
+                </Button>
+              </div>
             </div>
           )}
         </main>
