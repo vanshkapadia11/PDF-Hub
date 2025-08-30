@@ -2,7 +2,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverExternalPackages: ["pdf-parse"],
+    serverComponentsExternalPackages: ["pdf-parse"],
     serverActions: {
       bodySizeLimit: "50mb", // 👈 increase upload limit
     },
