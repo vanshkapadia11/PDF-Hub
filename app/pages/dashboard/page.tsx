@@ -24,7 +24,19 @@ import Footer from "@/components/Footer";
 import Floating, {
   FloatingElement,
 } from "@/components/fancy/image/parallax-floating";
+import { LucideIcon } from "lucide-react";
 
+interface FloatingIconProps {
+  icon: LucideIcon;
+  [key: string]: any; // Allows for any other props to be passed
+}
+
+interface ToolCardProps {
+  name: string;
+  description: string;
+  icon: React.ReactNode;
+  href: string;
+}
 const tools = [
   {
     name: "Merge PDF",
@@ -92,7 +104,7 @@ const tools = [
   },
 ];
 
-const ToolCard = ({ name, description, icon, href }) => (
+const ToolCard = ({ name, description, icon, href }: ToolCardProps) => (
   <Link href={href} className="group">
     <div
       className={cn(
@@ -111,9 +123,12 @@ const ToolCard = ({ name, description, icon, href }) => (
   </Link>
 );
 
-const FloatingIcon = motion(({ icon: Icon, ...props }) => <Icon {...props} />, {
-  forwardMotionProps: true,
-});
+const FloatingIcon = motion(
+  ({ icon: Icon, ...props }: FloatingIconProps) => <Icon {...props} />,
+  {
+    forwardMotionProps: true,
+  }
+);
 
 const LandingPage = () => {
   const [scope, animate] = useAnimate();
