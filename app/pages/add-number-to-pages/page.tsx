@@ -376,13 +376,16 @@ export default function AddPageNumbers() {
                 variant={"outline"}
                 className="mt-4 ring-2 ring-inset ring-green-500"
               >
-                <a
-                  href={downloadUrl}
-                  download={`numbered-${file.name}`}
-                  className="text-sm font-semibold uppercase"
-                >
-                  Download Numbered PDF
-                </a>
+                {/* Conditionally render the link only if 'file' is not null */}
+                {file && (
+                  <a
+                    href={downloadUrl}
+                    download={`numbered-${file.name}`} // `file.name` is now safe to access
+                    className="text-sm font-semibold uppercase"
+                  >
+                    Download Numbered PDF
+                  </a>
+                )}
               </Button>
             </div>
           )}
