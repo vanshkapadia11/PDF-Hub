@@ -35,9 +35,10 @@ export default function FilterImagePage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+  // New core function to handle file processing
+  const handleFiles = (files: FileList | null) => {
     setError("");
-    const selectedFile = e.target.files?.[0] || null;
+    const selectedFile = files?.[0] || null;
     if (selectedFile && selectedFile.type.startsWith("image/")) {
       setFile(selectedFile);
       setPreviewUrl(URL.createObjectURL(selectedFile));
@@ -45,6 +46,15 @@ export default function FilterImagePage() {
     } else {
       setError("Please select a valid image file (PNG, JPG, WebP, etc.)");
     }
+  };
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    handleFiles(e.target.files);
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    handleFiles(e.dataTransfer.files);
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -158,13 +168,7 @@ export default function FilterImagePage() {
                 : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500 border-dashed"
             )}
             onClick={() => fileInputRef.current?.click()}
-            onDrop={(e: DragEvent<HTMLDivElement>) => {
-              e.preventDefault();
-              handleFileChange({
-                target: { files: e.dataTransfer.files } as EventTarget &
-                  HTMLInputElement,
-              });
-            }}
+            onDrop={handleDrop}
             onDragOver={(e) => e.preventDefault()}
           >
             <p className="text-sm font-semibold uppercase">
