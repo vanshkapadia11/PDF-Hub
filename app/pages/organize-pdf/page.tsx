@@ -48,11 +48,11 @@ interface PDFPage {
   preview: string | null;
 }
 
-// Define a simple type for the PDFPageProxy from pdf.js
+// Define a simplified type for the PDFPageProxy from pdf.js to avoid 'any'
 interface PDFPageProxy {
-  getViewport: (options: { scale: number }) => any; // This 'any' is acceptable because it's a sub-property
+  getViewport: (options: { scale: number }) => any;
   render: (options: {
-    canvasContext: CanvasRenderingContext2D;
+    canvasContext: CanvasRenderingContext2D | null;
     viewport: any;
   }) => {
     promise: Promise<void>;
@@ -175,7 +175,7 @@ export default function PDFOrganizer() {
   useEffect(() => {
     const loadPdfjs = async () => {
       try {
-        const pdfjsLib = await import("pdfjs-dist/build/pdf"); // We'll cast to a defined type to avoid 'any'
+        const pdfjsLib = await import("pdfjs-dist/build/pdf");
         const typedPdfJsLib = pdfjsLib as unknown as PdfJs;
         typedPdfJsLib.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
         setPdfjs(typedPdfJsLib);
@@ -218,7 +218,7 @@ export default function PDFOrganizer() {
   const renderPagePreviews = useCallback(
     async (pdfDoc: {
       numPages: number;
-      getPage: (pageNumber: number) => Promise<PDFPageProxy>; // FIX: Updated type
+      getPage: (pageNumber: number) => Promise<PDFPageProxy>; // FIX: Updated type here
     }) => {
       const previewPromises: Promise<string | null>[] = [];
       const scale = 0.5;
@@ -460,8 +460,6 @@ export default function PDFOrganizer() {
             className="hidden"
           />
                    {" "}
-          {/* Conditional Rendering based on files and downloadUrl state */}   
-               {" "}
           {!file || downloadUrl ? (
             <div
               className={cn(
@@ -585,7 +583,7 @@ export default function PDFOrganizer() {
                     </Button>
                                    {" "}
                   </div>
-                                 {" "}
+                               {" "}
                 </div>
               ) : (
                 <p className="text-sm font-semibold uppercase text-gray-500 text-center">

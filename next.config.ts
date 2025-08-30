@@ -1,11 +1,9 @@
-// next.config.js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverExternalPackages: ["pdf-parse"],
-    // serverComponentsExternalPackages: [],
+    serverComponentsExternalPackages: ["pdf-parse"],
     serverActions: {
-      bodySizeLimit: "50mb", // 👈 increase upload limit
+      bodySizeLimit: "50mb",
     },
   },
 };
