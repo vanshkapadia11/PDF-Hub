@@ -175,7 +175,9 @@ export default function PDFOrganizer() {
   useEffect(() => {
     const loadPdfjs = async () => {
       try {
-        const pdfjsLib = await import("pdfjs-dist/build/pdf");
+        // const pdfjsLib = await import("pdfjs-dist/build/pdf
+        // ");
+        const pdfjsLib = require("pdfjs-dist/build/pdf") as any;
         const typedPdfJsLib = pdfjsLib as unknown as PdfJs;
         typedPdfJsLib.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
         setPdfjs(typedPdfJsLib);

@@ -126,11 +126,19 @@ export default function EditPDF() {
       });
 
       // Serialize the PDFDocument to bytes
-      const pdfBytes = await pdfDoc.save();
+      const pdfBytes: Uint8Array = await pdfDoc.save(); // Your data, which might have a SharedArrayBuffer underneath
+
+      // Correct way to create a Blob from a Uint8Array
+      // const blob = new Blob([pdfBytes.buffer], { type: "application/pdf" });
 
       // Create a Blob and a URL for download
       // const blob = new Blob([pdfBytes], { type: "application/pdf" });
-      const blob = new Blob([pdfBytes.buffer], { type: "application/pdf" });
+      // const blob = new Blob([pdfBytes.buffer], { type: "application/pdf" });
+      // const pdfBytes = await pdfDoc.save();
+      // const blob = new Blob([pdfBytes.buffer], { type: "application/pdf" });
+      const blob = new Blob([pdfBytes.buffer as ArrayBuffer], {
+        type: "application/pdf",
+      });
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
     } catch (err: unknown) {
