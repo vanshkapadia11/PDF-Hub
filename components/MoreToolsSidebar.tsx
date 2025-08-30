@@ -1,6 +1,6 @@
 // components/MoreToolsSidebar.js
 import Link from "next/link";
-import { useMemo } from "react";
+import { ForwardRefExoticComponent, RefAttributes, useMemo } from "react";
 import {
   FileCheck2,
   Shell,
@@ -25,8 +25,13 @@ import {
   Sparkles,
   FileText,
   FileDown,
+  LucideProps,
 } from "lucide-react";
 import { Separator } from "./ui/separator";
+
+interface MoreToolsSidebarProps {
+  currentPage: string;
+}
 
 const pdfTools = [
   {
@@ -132,7 +137,16 @@ const pdfTools = [
   },
 ];
 
-const shuffleArray = (array) => {
+const shuffleArray = (
+  array: {
+    name: string;
+    href: string;
+    icon: ForwardRefExoticComponent<
+      Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>
+    >;
+    color: string;
+  }[]
+) => {
   const newArray = [...array];
   for (let i = newArray.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -141,7 +155,9 @@ const shuffleArray = (array) => {
   return newArray;
 };
 
-export default function MoreToolsSidebar({ currentPage }) {
+export default function MoreToolsSidebar({
+  currentPage,
+}: MoreToolsSidebarProps) {
   const randomizedTools = useMemo(() => {
     const availableTools = pdfTools.filter((tool) => tool.href !== currentPage);
     const shuffledTools = shuffleArray(availableTools);
