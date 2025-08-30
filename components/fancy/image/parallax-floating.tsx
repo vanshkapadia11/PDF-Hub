@@ -45,7 +45,11 @@ const Floating = ({
       }
     >()
   );
-  const mousePositionRef = useMousePositionRef(containerRef!);
+
+  // Cast the ref to the correct type
+  const mousePositionRef = useMousePositionRef(
+    containerRef as React.RefObject<HTMLElement>
+  );
 
   const registerElement = useCallback(
     (id: string, element: HTMLDivElement, depth: number) => {
