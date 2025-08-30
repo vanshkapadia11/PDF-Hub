@@ -118,9 +118,15 @@ export default function PDFToImagesConverter() {
         }
         throw new Error(errorMessage);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      // Changed 'any' to 'unknown'
       console.error("Error converting PDF:", err);
-      setError(err.message || "Failed to convert PDF. Please try again.");
+      // Use a type guard to check if err is an Error object
+      if (err instanceof Error) {
+        setError(err.message || "Failed to convert PDF. Please try again.");
+      } else {
+        setError("Failed to convert PDF. Please try again.");
+      }
     } finally {
       setIsConverting(false);
     }
@@ -229,7 +235,7 @@ export default function PDFToImagesConverter() {
               <Separator />
               <div className="flex justify-center">
                 <Button
-                  onClick={handleSubmit as any}
+                  onClick={handleSubmit} // Removed 'as any' cast
                   disabled={isConverting}
                   variant={"outline"}
                   className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase"

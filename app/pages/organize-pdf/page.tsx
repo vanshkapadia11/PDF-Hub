@@ -48,6 +48,19 @@ interface PDFPage {
   preview: string | null;
 }
 
+// Define the type for the PDF.js library's getDocument method
+interface PdfJs {
+  getDocument: (url: string | { data: ArrayBuffer }) => {
+    promise: {
+      numPages: number;
+      getPage: (pageNumber: number) => Promise<any>; // You can further refine this type if needed
+    };
+  };
+  GlobalWorkerOptions: {
+    workerSrc: string;
+  };
+}
+
 // Component for a single draggable page
 interface SortablePageProps {
   page: PDFPage;
@@ -129,7 +142,7 @@ export default function PDFOrganizer() {
   const [downloadUrl, setDownloadUrl] = useState<string>("");
   const [dragActive, setDragActive] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [pdfjs, setPdfjs] = useState<any>(null);
+  const [pdfjs, setPdfjs] = useState<PdfJs | null>(null);
   const [isPdfjsLoaded, setIsPdfjsLoaded] = useState<boolean>(false);
 
   const sensors = useSensors(
@@ -145,8 +158,10 @@ export default function PDFOrganizer() {
     const loadPdfjs = async () => {
       try {
         const pdfjsLib = await import("pdfjs-dist/build/pdf");
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
-        setPdfjs(pdfjsLib);
+        // We'll cast to a defined type to avoid 'any'
+        const typedPdfJsLib = pdfjsLib as unknown as PdfJs;
+        typedPdfJsLib.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
+        setPdfjs(typedPdfJsLib);
         setIsPdfjsLoaded(true);
       } catch (error) {
         console.error("Failed to load PDF.js:", error);
@@ -186,32 +201,38 @@ export default function PDFOrganizer() {
     setPages(pages.filter((page) => page.id !== idToRemove));
   };
 
-  const renderPagePreviews = useCallback(async (pdfDoc: any) => {
-    const previewPromises: Promise<string | null>[] = [];
-    const scale = 0.5;
+  const renderPagePreviews = useCallback(
+    async (pdfDoc: {
+      numPages: number;
+      getPage: (pageNumber: number) => Promise<any>;
+    }) => {
+      const previewPromises: Promise<string | null>[] = [];
+      const scale = 0.5;
 
-    for (let i = 1; i <= pdfDoc.numPages; i++) {
-      previewPromises.push(
-        (async () => {
-          try {
-            const page = await pdfDoc.getPage(i);
-            const viewport = page.getViewport({ scale });
-            const canvas = document.createElement("canvas");
-            const canvasContext = canvas.getContext("2d");
-            if (!canvasContext) return null;
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            await page.render({ canvasContext, viewport }).promise;
-            return canvas.toDataURL("image/jpeg");
-          } catch (err) {
-            console.error(`Error rendering page ${i}:`, err);
-            return null;
-          }
-        })()
-      );
-    }
-    return Promise.all(previewPromises);
-  }, []);
+      for (let i = 1; i <= pdfDoc.numPages; i++) {
+        previewPromises.push(
+          (async () => {
+            try {
+              const page = await pdfDoc.getPage(i);
+              const viewport = page.getViewport({ scale });
+              const canvas = document.createElement("canvas");
+              const canvasContext = canvas.getContext("2d");
+              if (!canvasContext) return null;
+              canvas.height = viewport.height;
+              canvas.width = viewport.width;
+              await page.render({ canvasContext, viewport }).promise;
+              return canvas.toDataURL("image/jpeg");
+            } catch (err) {
+              console.error(`Error rendering page ${i}:`, err);
+              return null;
+            }
+          })()
+        );
+      }
+      return Promise.all(previewPromises);
+    },
+    []
+  );
 
   const handleFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -221,7 +242,7 @@ export default function PDFOrganizer() {
       setLoading(true);
 
       try {
-        if (!isPdfjsLoaded) {
+        if (!isPdfjsLoaded || !pdfjs) {
           throw new Error("PDF viewer is still loading. Please wait a moment.");
         }
 
@@ -334,7 +355,7 @@ export default function PDFOrganizer() {
     if (droppedFile && droppedFile.type === "application/pdf") {
       handleFileSelect({
         target: { files: [droppedFile] },
-      } as ChangeEvent<HTMLInputElement>);
+      } as unknown as ChangeEvent<HTMLInputElement>);
     } else {
       resetState();
       setError("Please drop a valid PDF file.");

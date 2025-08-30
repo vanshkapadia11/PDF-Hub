@@ -119,9 +119,14 @@ export default function PdfToExcel() {
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
       setConvertedSize(blob.size);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      // Use unknown here
       console.error("Error converting PDF to Excel:", error);
-      setError(error.message || "Failed to convert PDF. Please try again.");
+      if (error instanceof Error) {
+        setError(error.message || "Failed to convert PDF. Please try again.");
+      } else {
+        setError("Failed to convert PDF. Please try again.");
+      }
     } finally {
       setIsConverting(false);
     }

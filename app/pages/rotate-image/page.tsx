@@ -121,9 +121,15 @@ export default function RotateFlipImagePage() {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      // Changed 'any' to 'unknown'
       console.error("Error rotating/flipping image:", err);
-      setError(err.message || "Failed to process image. Please try again.");
+      // Use a type guard to check if the error is an instance of Error
+      if (err instanceof Error) {
+        setError(err.message || "Failed to process image. Please try again.");
+      } else {
+        setError("Failed to process image. An unknown error occurred.");
+      }
     } finally {
       setIsProcessing(false);
     }

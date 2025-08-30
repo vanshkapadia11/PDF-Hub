@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import type { ChangeEvent, DragEvent, FormEvent } from "react";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { cn } from "@/lib/utils";
 import {
   Breadcrumb,
@@ -98,12 +98,24 @@ export default function PDFRemover() {
 
       const url = window.URL.createObjectURL(new Blob([res.data]));
       setDownloadUrl(url);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      const errorMessage =
-        err.response && err.response.data
-          ? await new Response(err.response.data).text()
-          : err.message || "Failed to remove pages. Please try again.";
+      let errorMessage = "Failed to remove pages. Please try again.";
+
+      if (axios.isAxiosError(err)) {
+        const axiosError = err as AxiosError;
+        if (axiosError.response?.data) {
+          // Assuming the server sends back a text error message
+          const errorText = await new Response(
+            axiosError.response.data as Blob
+          ).text();
+          errorMessage = errorText;
+        } else if (axiosError.message) {
+          errorMessage = axiosError.message;
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -230,7 +242,7 @@ export default function PDFRemover() {
               </div>
               <div className="flex justify-center pt-2">
                 <Button
-                  onClick={handleSubmit as any}
+                  onClick={handleSubmit} // Removed 'as any'
                   disabled={!file || !pagesToRemove || loading}
                   variant={"outline"}
                   className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase"

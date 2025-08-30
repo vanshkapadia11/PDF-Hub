@@ -174,9 +174,14 @@ export default function ResizeImagePage() {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error resizing image:", err);
-      setError(err.message || "Failed to resize image. Please try again.");
+      // Safely handle the error by checking if it's an instance of Error
+      if (err instanceof Error) {
+        setError(err.message || "Failed to resize image. Please try again.");
+      } else {
+        setError("Failed to resize image. An unknown error occurred.");
+      }
     } finally {
       setIsProcessing(false);
     }

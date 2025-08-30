@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react"; // Added useEffect for cleanup
 import type { ChangeEvent, DragEvent } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,13 @@ export default function SplitPDF() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pageCount, setPageCount] = useState<number>(0);
 
+  // Added useEffect to revoke object URLs on component unmount
+  useEffect(() => {
+    return () => {
+      downloadUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [downloadUrls]);
+
   const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
     setError("");
     const selectedFile = event.target.files?.[0];
@@ -37,9 +44,13 @@ export default function SplitPDF() {
       setFile(selectedFile);
       setRanges([""]);
       setDownloadUrls([]);
+      // The logic for reading page count from a PDF is client-side and complex
+      // For this correction, we'll keep the existing, though non-standard, approach
+      // and note that a more robust solution would involve a library like 'pdf-lib'
       const reader = new FileReader();
       reader.onload = function (e) {
         if (e.target?.result) {
+          // This is a simplified, non-robust way to get page count.
           const pdfData = new Uint8Array(e.target.result as ArrayBuffer);
           const pdfString = new TextDecoder().decode(pdfData);
           const match = /\/Count\s+(\d+)/.exec(pdfString);
@@ -126,12 +137,21 @@ export default function SplitPDF() {
         throw new Error(errorData.error || `Server error: ${response.status}`);
       }
 
+      // The original code only handles one downloadUrl, but the server response might be a ZIP.
+      // This part of the code needs to be aligned with the backend's response format.
+      // Assuming the backend returns a single ZIP file, we'll store its URL.
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setDownloadUrls([url]);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      // Changed 'any' to 'unknown'
       console.error("Error splitting PDF:", error);
-      setError(error.message || "Failed to split PDF. Please try again.");
+      // Use a type guard to check if the error is an instance of Error
+      if (error instanceof Error) {
+        setError(error.message || "Failed to split PDF. Please try again.");
+      } else {
+        setError("Failed to split PDF. An unknown error occurred.");
+      }
     } finally {
       setIsSplitting(false);
     }
@@ -235,8 +255,7 @@ export default function SplitPDF() {
                   Page Ranges to Extract
                 </h3>
                 <p className="text-xs font-semibold uppercase my-2 text-zinc-600">
-                  Examples: &quot;1-5&quot;, &quot;8,10&quot;, &quot;15-&quot;
-                  or a combination
+                  Examples: "1-5", "8,10", "15-" or a combination
                 </p>
                 {ranges.map((range, index) => (
                   <div key={index} className="flex items-center gap-2 mt-2">
