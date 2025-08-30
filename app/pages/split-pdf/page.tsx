@@ -235,8 +235,8 @@ export default function SplitPDF() {
                   Page Ranges to Extract
                 </h3>
                 <p className="text-xs font-semibold uppercase my-2 text-zinc-600">
-                  Examples: &quot;1-5&quot;, &quot;8,10&quot;, &quot15-&quot; or
-                  a combination
+                  Examples: &quot;1-5&quot;, &quot;8,10&quot;, &quot;15-&quot;
+                  or a combination
                 </p>
                 {ranges.map((range, index) => (
                   <div key={index} className="flex items-center gap-2 mt-2">

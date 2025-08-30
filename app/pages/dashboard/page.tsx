@@ -1,10 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { motion, stagger, useAnimate } from "framer-motion";
 import {
   Image as ImageIcon,
   MergeIcon,
@@ -14,9 +15,15 @@ import {
   ScanSearchIcon,
   PencilRulerIcon,
   FireExtinguisher,
+  Code2,
+  LucideKeySquare,
+  ClosedCaption,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import Floating, {
+  FloatingElement,
+} from "@/components/fancy/image/parallax-floating";
 
 const tools = [
   {
@@ -73,7 +80,7 @@ const tools = [
     icon: (
       <ScanSearchIcon className="h-12 w-12 text-rose-500 group-hover:text-white transition-colors duration-300" />
     ),
-    href: "/ocr-pdf",
+    href: "/convert-image",
   },
   {
     name: "PDF Editor",
@@ -81,7 +88,7 @@ const tools = [
     icon: (
       <PencilRulerIcon className="h-12 w-12 text-rose-500 group-hover:text-white transition-colors duration-300" />
     ),
-    href: "/pdf-editor",
+    href: "/edit-pdf",
   },
 ];
 
@@ -104,23 +111,95 @@ const ToolCard = ({ name, description, icon, href }) => (
   </Link>
 );
 
+const FloatingIcon = motion(({ icon: Icon, ...props }) => <Icon {...props} />, {
+  forwardMotionProps: true,
+});
+
 const LandingPage = () => {
+  const [scope, animate] = useAnimate();
+
+  useEffect(() => {
+    animate(
+      "svg",
+      { opacity: [0, 1] },
+      { duration: 0.5, delay: stagger(0.15) }
+    );
+  }, [animate]);
+
   return (
     <>
       <Navbar />
       <div className="min-h-screen bg-gray-50 bg-dots-pattern">
-        <main className="flex-1 min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
-          <div className="w-full max-w-4xl mx-auto text-center py-16">
-            <h1 className="text-5xl md:text-6xl font-extrabold uppercase leading-tight text-gray-800 tracking-wider drop-shadow-md">
-              Welcome to <span className="text-rose-500">PDF Hub</span>
-            </h1>
-            <p className="mt-4 text-lg md:text-xl font-medium text-zinc-600 drop-shadow-sm uppercase">
-              All the tools you need to manage your documents and images, in one
-              powerful and easy-to-use platform.
-            </p>
-            <Separator className="my-12 bg-gray-300" />
+        <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8">
+          {/* Hero Section with Parallax Background */}
+          <div className="relative w-full h-[600px] flex items-center justify-center overflow-hidden">
+            {/* Parallax Icons in Background */}
+            <div className="absolute inset-0 w-full h-full" ref={scope}>
+              <Floating>
+                <FloatingElement
+                  depth={1}
+                  className="top-[20%] left-[5%] opacity-10"
+                >
+                  <FloatingIcon
+                    icon={LucideKeySquare}
+                    className="w-24 h-24 text-rose-500"
+                  />
+                </FloatingElement>
+                <FloatingElement
+                  depth={2}
+                  className="top-[75%] left-[80%] opacity-10"
+                >
+                  <FloatingIcon
+                    icon={Code2}
+                    className="w-24 h-24 text-rose-500"
+                  />
+                </FloatingElement>
+                <FloatingElement
+                  depth={4}
+                  className="top-[60%] left-[25%] opacity-10"
+                >
+                  <FloatingIcon
+                    icon={ClosedCaption}
+                    className="w-28 h-28 text-rose-500"
+                  />
+                </FloatingElement>
+                <FloatingElement
+                  depth={3}
+                  className="top-[45%] left-[50%] opacity-10"
+                >
+                  <FloatingIcon
+                    icon={MergeIcon}
+                    className="w-24 h-24 text-rose-500"
+                  />
+                </FloatingElement>
+                <FloatingElement
+                  depth={5}
+                  className="top-[30%] left-[75%] opacity-10"
+                >
+                  <FloatingIcon
+                    icon={SplitIcon}
+                    className="w-24 h-24 text-rose-500"
+                  />
+                </FloatingElement>
+              </Floating>
+            </div>
+
+            {/* Main Hero Content */}
+            <div className="relative z-10 w-full max-w-4xl text-center">
+              <div className="bg-white/50 backdrop-blur-sm p-8 rounded-xl">
+                <h1 className="text-5xl md:text-6xl font-extrabold uppercase leading-tight text-gray-800 tracking-wide drop-shadow-md">
+                  Welcome to <span className="text-rose-500">PDF Hub</span>
+                </h1>
+                <p className="mt-4 text-medium md:text-lg font-medium text-zinc-600 drop-shadow-sm uppercase">
+                  All the tools you need to manage your documents and images, in
+                  one powerful and easy-to-use platform.
+                </p>
+              </div>
+              <Separator className="my-12 bg-gray-300" />
+            </div>
           </div>
 
+          {/* Tools Section */}
           <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 px-4">
             {tools.map((tool, index) => (
               <ToolCard
@@ -128,7 +207,7 @@ const LandingPage = () => {
                 name={tool.name}
                 description={tool.description}
                 icon={tool.icon}
-                href={tool.href}
+                href={`/pages/${tool.href}`}
               />
             ))}
           </div>
@@ -145,7 +224,7 @@ const LandingPage = () => {
               className="mt-6 text-sm font-semibold uppercase ring-2 ring-inset ring-rose-400 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors duration-300"
               variant={"outline"}
             >
-              <Link href="/merge-pdf">Start with Merge PDF</Link>
+              <Link href="/pages/merge-pdf">Start with Merge PDF</Link>
             </Button>
           </div>
         </main>

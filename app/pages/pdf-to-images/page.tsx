@@ -95,7 +95,6 @@ export default function PdfToImagesPage() {
       setMessage("Please select a file first.");
       return;
     }
-
     setIsLoading(true);
     setMessage("Processing your PDF... This may take a moment.");
     setDownloadUrl("");
@@ -116,6 +115,7 @@ export default function PdfToImagesPage() {
         setMessage("Success! Your images are ready to download.");
       } else {
         const errorText = await response.text();
+        console.log("File to be sent:", file);
         setMessage(`Error: ${errorText || "An unknown error occurred."}`);
       }
     } catch (error) {

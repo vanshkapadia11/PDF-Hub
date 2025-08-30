@@ -6,7 +6,7 @@ const Footer = () => {
       <footer className="text-white bg-gray-50 py-12 flex justify-center items-center backdrop-blur-3xl">
         <div className="text-center">
           {/* "PDF Hub" text styled to match the subtle, ghosted effect */}
-          <h2 className="text-6xl uppercase cursor-pointer font-extrabold tracking-tighter text-gray-300 opacity-40 hover:opacity-70 transition-opacity backdrop-blur-3xl duration-300">
+          <h2 className="md:text-9xl text-6xl uppercase cursor-pointer font-extrabold tracking-tighter text-zinc-500 blur-sm hover:blur-none transition-blur duration-500">
             PDF Hub
           </h2>
         </div>

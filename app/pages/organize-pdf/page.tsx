@@ -76,7 +76,7 @@ function SortablePage({ page, removePage }: SortablePageProps) {
       ref={setNodeRef}
       style={style}
       className={cn(
-        "relative w-40 h-56 border border-gray-300 rounded-lg overflow-hidden cursor-grab active:cursor-grabbing bg-white shadow-md flex-shrink-0 transition-all duration-200",
+        "relative w-40 h-56 border border-gray-300 rounded-lg overflow-hidden cursor-grab active:cursor-grabbing bg-white shadow-md flex-shrink-0 transition-all duration-200 ",
         isDragging && "shadow-xl border-blue-500"
       )}
     >
@@ -93,7 +93,7 @@ function SortablePage({ page, removePage }: SortablePageProps) {
           variant="ghost"
           size="sm"
           onClick={() => removePage(id)}
-          className="p-1 h-auto text-red-500 hover:bg-red-50 hover:text-red-700 transition-all rounded-full"
+          className="p-2 h-auto text-red-500 cursor-pointer bg-red-50 hover:text-red-700 transition-all rounded-full"
         >
           <CircleXIcon className="h-5 w-5" />
         </Button>
@@ -113,7 +113,7 @@ function SortablePage({ page, removePage }: SortablePageProps) {
         </div>
       )}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 shadow-md">
-        <span className="text-sm font-semibold text-gray-700">
+        <span className="text-sm font-semibold text-gray-700 uppercase">
           Page {pageNumber}
         </span>
       </div>
@@ -179,6 +179,11 @@ export default function PDFOrganizer() {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  };
+
+  // Function to remove a page
+  const removePage = (idToRemove: string) => {
+    setPages(pages.filter((page) => page.id !== idToRemove));
   };
 
   const renderPagePreviews = useCallback(async (pdfDoc: any) => {
@@ -443,7 +448,7 @@ export default function PDFOrganizer() {
                   variant="ghost"
                   size="sm"
                   onClick={resetState}
-                  className="p-1 h-auto text-red-500 hover:bg-red-50 hover:text-red-700 transition-all"
+                  className="p-1 h-auto text-red-500 bg-red-50 hover:text-red-700 transition-all"
                 >
                   <CircleXIcon className="h-5 w-5" />
                 </Button>

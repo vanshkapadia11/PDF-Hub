@@ -1,33 +1,55 @@
-import { Buffer } from "buffer";
+// app/api/pdf-to-images/route.ts
+import { NextResponse } from "next/server";
+import { fromBuffer } from "pdf2pic";
+import JSZip from "jszip";
 
-export async function POST(request) {
+export const POST = async (req) => {
   try {
-    // Dynamically import PDF2Pic inside the function
-    const { PDF2Pic } = await import("pdf2pic");
-
-    const formData = await request.formData();
+    const formData = await req.formData();
     const file = formData.get("file");
 
     if (!file) {
-      return Response.json({ error: "No file provided" }, { status: 400 });
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const arrayBuffer = await file.arrayBuffer();
+    const pdfBuffer = Buffer.from(arrayBuffer);
 
-    const options = {
-      density: 100,
-      saveFilename: "output",
-      savePath: "./images",
-      format: "png",
-      width: 600,
-      height: 600,
-    };
+    // Use pdf2pic to convert the PDF buffer to a list of image buffers
+    const convert = fromBuffer(pdfBuffer, {
+      density: 100, // Image quality (higher is better)
+      saveFilename: "page",
+      format: "jpg",
+      savePath: ".", // No need to save to a file
+    });
 
-    const convert = new PDF2Pic(options);
-    const result = await convert.convertBuffer(buffer);
+    const images = await convert.bulk(-1, { responseType: "buffer" });
+    const zip = new JSZip();
 
-    return Response.json({ images: result });
+    // Loop through each image and add it to the zip file
+    images.forEach((imageBuffer, index) => {
+      // Ensure imageBuffer is a Buffer before adding it
+      if (imageBuffer && imageBuffer.buffer) {
+        zip.file(`page-${index + 1}.jpg`, imageBuffer.buffer);
+      }
+    });
+
+    const zipBlob = await zip.generateAsync({ type: "nodebuffer" });
+
+    // Return the zip file as a download
+    const headers = new Headers();
+    headers.set("Content-Type", "application/zip");
+    headers.set(
+      "Content-Disposition",
+      `attachment; filename="converted-images.zip"`
+    );
+
+    return new Response(zipBlob, { headers });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error("Server error:", error);
+    return NextResponse.json(
+      { error: "Server error: Failed to process PDF." },
+      { status: 500 }
+    );
   }
-}
+};

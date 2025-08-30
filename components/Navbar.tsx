@@ -9,6 +9,7 @@ import {
   MoveDownRightIcon,
   MenuIcon,
   Text,
+  Shredder,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -44,8 +45,8 @@ const navLinks = [
     iconColor: "text-emerald-400",
   },
   {
-    name: "resize PDf",
-    href: "/pages/resize-pdf",
+    name: "compress Pdf",
+    href: "/pages/compress-pdf",
     icon: Text,
     iconColor: "text-cyan-400",
   },
@@ -64,7 +65,7 @@ const Navbar = () => {
     <section className="flex items-center justify-between py-4 px-4 md:px-10 border-b-2 border-[#e8e8e8] sticky top-0 z-50 bg-white">
       {/* Logo Section */}
       <div className="flex items-center gap-2 text-sm font-semibold uppercase">
-        <LucideHopOff /> PDF Hub
+        <Shredder /> PDF Hub
       </div>
 
       {/* Desktop Navigation */}
@@ -114,7 +115,7 @@ const Navbar = () => {
           <SheetContent side="right" className="w-full p-8">
             {/* Added a visually hidden title here to resolve the error */}
             <SheetTitle className="flex items-center gap-2 text-sm font-semibold uppercase">
-              <LucideHopOff /> PDF Hub
+              <Shredder /> PDF Hub
             </SheetTitle>
             <div className="flex flex-col items-start pt-8">
               <div className="flex flex-col w-full space-y-2">
