@@ -129,7 +129,7 @@ export default function CompressPDF() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response.json();
         throw new Error(errorData.error || `Server error: ${response.status}`);
       }
 
