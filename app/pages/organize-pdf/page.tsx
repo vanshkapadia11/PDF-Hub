@@ -64,7 +64,7 @@ interface PdfJs {
   getDocument: (url: string | { data: ArrayBuffer }) => {
     promise: {
       numPages: number;
-      getPage: (pageNumber: number) => Promise<PDFPageProxy>; // FIX: Replaced 'any' with the new type
+      getPage: (pageNumber: number) => Promise<PDFPageProxy>;
     };
   };
   GlobalWorkerOptions: {
@@ -104,28 +104,23 @@ function SortablePage({ page, removePage }: SortablePageProps) {
         isDragging && "shadow-xl border-blue-500"
       )}
     >
-           {" "}
       <div
         className="absolute top-2 left-2 p-1 rounded-full bg-white/70 backdrop-blur-sm shadow-md cursor-grab"
         {...attributes}
         {...listeners}
       >
-                <GripVerticalIcon className="h-4 w-4 text-gray-600" />     {" "}
+        <GripVerticalIcon className="h-4 w-4 text-gray-600" />
       </div>
-           {" "}
       <div className="absolute top-2 right-2 z-10">
-               {" "}
         <Button
           variant="ghost"
           size="sm"
           onClick={() => removePage(id)}
           className="p-2 h-auto text-red-500 cursor-pointer bg-red-50 hover:text-red-700 transition-all rounded-full"
         >
-                    <CircleXIcon className="h-5 w-5" />       {" "}
+          <CircleXIcon className="h-5 w-5" />
         </Button>
-             {" "}
       </div>
-           {" "}
       {preview ? (
         <Image
           src={preview}
@@ -136,19 +131,14 @@ function SortablePage({ page, removePage }: SortablePageProps) {
         />
       ) : (
         <div className="flex items-center justify-center w-full h-full bg-gray-100">
-                   {" "}
-          <Loader2Icon className="h-8 w-8 animate-spin text-gray-400" />       {" "}
+          <Loader2Icon className="h-8 w-8 animate-spin text-gray-400" />
         </div>
       )}
-           {" "}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 shadow-md">
-               {" "}
         <span className="text-sm font-semibold text-gray-700 uppercase">
-                    Page {pageNumber}       {" "}
+          Page {pageNumber}
         </span>
-             {" "}
       </div>
-         {" "}
     </div>
   );
 }
@@ -162,7 +152,6 @@ export default function PDFOrganizer() {
   const [dragActive, setDragActive] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pdfjs, setPdfjs] = useState<PdfJs | null>(null);
-  const [isPdfjsLoaded, setIsPdfjsLoaded] = useState<boolean>(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -170,26 +159,26 @@ export default function PDFOrganizer() {
         distance: 8,
       },
     })
-  ); // Load PDF.js library and set worker source
+  );
 
+  // Load PDF.js library and set worker source
   useEffect(() => {
     const loadPdfjs = async () => {
       try {
-        // const pdfjsLib = await import("pdfjs-dist/build/pdf
-        // ");
+        // const pdfjsLib = await import("pdfjs-dist/build/pdf");
         const pdfjsLib = require("pdfjs-dist/build/pdf") as any;
         const typedPdfJsLib = pdfjsLib as unknown as PdfJs;
-        typedPdfJsLib.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
+        typedPdfJsLib.GlobalWorkerOptions.workerSrc = `/pdfjs-dist/build/pdf.worker.min.mjs`;
         setPdfjs(typedPdfJsLib);
-        setIsPdfjsLoaded(true);
       } catch (error) {
         console.error("Failed to load PDF.js:", error);
         setError("Failed to load PDF viewer. Please refresh the page.");
       }
     };
     loadPdfjs();
-  }, []); // Clean up object URLs to prevent memory leaks
+  }, []);
 
+  // Clean up object URLs to prevent memory leaks
   useEffect(() => {
     return () => {
       if (downloadUrl) {
@@ -201,8 +190,9 @@ export default function PDFOrganizer() {
         }
       });
     };
-  }, [downloadUrl, pages]); // Unified function to reset all state
+  }, [downloadUrl, pages]);
 
+  // Unified function to reset all state
   const resetState = () => {
     setFile(null);
     setPages([]);
@@ -211,8 +201,9 @@ export default function PDFOrganizer() {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-  }; // Function to remove a page
+  };
 
+  // Function to remove a page
   const removePage = (idToRemove: string) => {
     setPages(pages.filter((page) => page.id !== idToRemove));
   };
@@ -220,7 +211,7 @@ export default function PDFOrganizer() {
   const renderPagePreviews = useCallback(
     async (pdfDoc: {
       numPages: number;
-      getPage: (pageNumber: number) => Promise<PDFPageProxy>; // FIX: Updated type here
+      getPage: (pageNumber: number) => Promise<PDFPageProxy>;
     }) => {
       const previewPromises: Promise<string | null>[] = [];
       const scale = 0.5;
@@ -258,7 +249,7 @@ export default function PDFOrganizer() {
       setLoading(true);
 
       try {
-        if (!isPdfjsLoaded || !pdfjs) {
+        if (!pdfjs) {
           throw new Error("PDF viewer is still loading. Please wait a moment.");
         }
 
@@ -390,70 +381,47 @@ export default function PDFOrganizer() {
 
   return (
     <>
-            <Navbar />      {/* Full-screen Loader Overlay */}     {" "}
+      <Navbar />
+      {/* Full-screen Loader Overlay */}
       {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
-                   {" "}
           <div className="flex flex-col items-center">
-                       {" "}
-            <Loader2Icon className="h-12 w-12 animate-spin text-rose-400" />   
-                   {" "}
+            <Loader2Icon className="h-12 w-12 animate-spin text-rose-400" />
             <p className="mt-4 text-sm font-semibold uppercase text-gray-700">
-                           {" "}
-              {pages.length > 0 ? "Organizing PDF..." : "Loading PDF..."}       
-                 {" "}
+              {pages.length > 0 ? "Organizing PDF..." : "Loading PDF..."}
             </p>
-                     {" "}
           </div>
-                 {" "}
         </div>
       )}
-            {/* Main content container */}     {" "}
+      {/* Main content container */}
       <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
-                {/* Main content area */}       {" "}
+        {/* Main content area */}
         <main className="flex-1 p-4 md:p-8 flex flex-col items-center text-center">
-                   {" "}
           <div className="w-full max-w-2xl mx-auto text-left">
-                       {" "}
             <Breadcrumb>
-                           {" "}
               <BreadcrumbList>
-                               {" "}
                 <BreadcrumbItem>
-                                   {" "}
                   <BreadcrumbLink href="/">
-                                       {" "}
                     <span className="text-sm font-semibold uppercase cursor-pointer">
-                                            Home                    {" "}
+                      Home
                     </span>
-                                     {" "}
                   </BreadcrumbLink>
-                                 {" "}
                 </BreadcrumbItem>
-                                <BreadcrumbSeparator />               {" "}
+                <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                                   {" "}
                   <BreadcrumbPage className="text-sm font-semibold uppercase">
-                                        Organize PDF                  {" "}
+                    Organize PDF
                   </BreadcrumbPage>
-                                 {" "}
                 </BreadcrumbItem>
-                             {" "}
               </BreadcrumbList>
-                         {" "}
             </Breadcrumb>
-                     {" "}
           </div>
-                   {" "}
           <h1 className="text-4xl font-extrabold uppercase mt-6">
-                        PDF Hub - PDF Organizer          {" "}
+            PDF Hub - PDF Organizer
           </h1>
-                   {" "}
           <p className="text-xs font-semibold uppercase mt-2 mb-8 text-zinc-600">
-                        Reorder, delete, and manage pages in your PDF document.
-                     {" "}
+            Reorder, delete, and manage pages in your PDF document.
           </p>
-                   {" "}
           <input
             type="file"
             ref={fileInputRef}
@@ -461,7 +429,6 @@ export default function PDFOrganizer() {
             onChange={handleFileSelect}
             className="hidden"
           />
-                   {" "}
           {!file || downloadUrl ? (
             <div
               className={cn(
@@ -475,77 +442,56 @@ export default function PDFOrganizer() {
               onDragLeave={handleDragLeave}
               onClick={() => fileInputRef.current?.click()}
             >
-                           {" "}
               <p className="text-sm font-semibold uppercase">
-                                Click to select or drag & drop a PDF file here  
-                           {" "}
+                Click to select or drag & drop a PDF file here
               </p>
-                           {" "}
               <p className="text-xs font-semibold uppercase mt-2 text-zinc-600">
-                                Accepted format: .pdf              {" "}
+                Accepted format: .pdf
               </p>
-                           {" "}
-              {!isPdfjsLoaded && (
+              {!pdfjs && (
                 <p className="text-sm font-semibold mt-4 text-blue-500 animate-pulse">
-                                    Loading PDF viewer...                {" "}
+                  Loading PDF viewer...
                 </p>
               )}
-                         {" "}
             </div>
           ) : (
             <div className="w-full max-w-2xl mt-8 p-6 rounded-xl bg-white shadow-lg border border-gray-200 space-y-6">
-                           {" "}
               <div className="flex items-center justify-between text-left">
-                               {" "}
                 <div className="flex items-center space-x-2">
-                                   {" "}
-                  <CheckCircle2Icon className="w-5 h-5 text-green-500" />       
-                           {" "}
+                  <CheckCircle2Icon className="w-5 h-5 text-green-500" />
                   <p className="text-sm font-semibold uppercase">
-                                        File Selected:                    {" "}
+                    File Selected:
                     <span className="font-normal text-gray-700">
-                                            {file.name}                   {" "}
+                      {file.name}
                     </span>
-                                     {" "}
                   </p>
-                                 {" "}
                 </div>
-                               {" "}
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={resetState}
                   className="p-1 h-auto text-red-500 bg-red-50 hover:text-red-700 transition-all"
                 >
-                                    <CircleXIcon className="h-5 w-5" />         
-                       {" "}
+                  <CircleXIcon className="h-5 w-5" />
                 </Button>
-                             {" "}
               </div>
-                            <Separator />             {" "}
+              <Separator />
               {pages.length > 0 ? (
                 <div className="text-left">
-                                   {" "}
                   <h3 className="text-lg font-semibold uppercase mb-4">
-                                        Drag and drop pages to reorder (
-                    {pages.length} pages)                  {" "}
+                    Drag and drop pages to reorder ({pages.length} pages)
                   </h3>
-                                   {" "}
                   <div className="flex-col items-center">
-                                       {" "}
                     <DndContext
                       sensors={sensors}
                       collisionDetection={closestCenter}
                       onDragEnd={handleDragEnd}
                     >
-                                           {" "}
                       <SortableContext
                         items={pages.map((p) => p.id)}
                         strategy={verticalListSortingStrategy}
                       >
-                                               {" "}
                         <div className="w-full flex flex-wrap gap-4 justify-center md:justify-start max-h-[60vh] overflow-y-auto p-2">
-                                                   {" "}
                           {pages.map((page) => (
                             <SortablePage
                               key={page.id}
@@ -553,107 +499,82 @@ export default function PDFOrganizer() {
                               removePage={removePage}
                             />
                           ))}
-                                                 {" "}
                         </div>
-                                             {" "}
                       </SortableContext>
-                                         {" "}
                     </DndContext>
-                                   {" "}
                   </div>
-                                 {" "}
                   <div className="flex justify-center pt-4">
-                                     {" "}
                     <Button
                       onClick={handleSubmit}
-                      disabled={loading || !isPdfjsLoaded}
+                      disabled={loading || !pdfjs}
                       variant={"outline"}
                       className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase"
                     >
-                                         {" "}
                       {loading ? (
                         <>
-                                                 {" "}
-                          <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> 
-                                                Organizing...                  
-                             {" "}
+                          <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                          Organizing...
                         </>
                       ) : (
                         "Organize PDF"
                       )}
-                                       {" "}
                     </Button>
-                                   {" "}
                   </div>
-                               {" "}
                 </div>
               ) : (
                 <p className="text-sm font-semibold uppercase text-gray-500 text-center">
-                                    No pages to display. Try uploading a
-                  different PDF.                {" "}
+                  No pages to display. Try uploading a different PDF.
                 </p>
               )}
-                         {" "}
             </div>
           )}
-                    {/* Error Message */}         {" "}
+          {/* Error Message */}
           {error && (
             <div className="w-full max-w-2xl mt-8 p-4 rounded-lg bg-red-50 border border-red-300 text-red-600 text-sm font-semibold uppercase text-left">
-                            <p>{error}</p>           {" "}
+              <p>{error}</p>
             </div>
           )}
-                    {/* Download Link */}         {" "}
+          {/* Download Link */}
           {downloadUrl && (
             <div className="w-full max-w-2xl mt-8 p-6 rounded-lg bg-white shadow-lg border border-green-200 text-center">
-                           {" "}
               <h3 className="text-lg font-semibold uppercase mb-4 text-green-700">
-                                PDF Organized Successfully!              {" "}
+                PDF Organized Successfully!
               </h3>
-                           {" "}
               <p className="text-sm font-semibold uppercase text-zinc-600">
-                                Your reorganized PDF is ready to download.      
-                       {" "}
+                Your reorganized PDF is ready to download.
               </p>
-                           {" "}
               <div className="flex justify-center mt-4 space-x-4">
-                               {" "}
                 <Button
                   variant={"outline"}
                   className="ring-2 ring-inset ring-green-500"
                 >
-                                   {" "}
                   <a
                     href={downloadUrl}
                     download="organized-document.pdf"
                     className="text-sm font-semibold uppercase"
                   >
-                                        Download The PDF                  {" "}
+                    Download The PDF
                   </a>
-                                 {" "}
                 </Button>
-                               {" "}
                 <Button
                   onClick={resetState}
                   variant={"outline"}
                   className="ring-2 ring-inset ring-gray-400 text-sm font-semibold uppercase"
                 >
-                                    <Repeat2Icon className="mr-2 h-4 w-4" />   
-                                Organize another                {" "}
+                  <Repeat2Icon className="mr-2 h-4 w-4" />
+                  Organize another
                 </Button>
-                             {" "}
               </div>
-                         {" "}
             </div>
           )}
-                 {" "}
         </main>
-                {/* Sidebar Container */}       {" "}
+        {/* Sidebar Container */}
         <aside className="md:w-[25%] p-4 bg-gray-100 border-l border-gray-200">
-                    <MoreToolsSidebar currentPage={"/organize-pdf"} />       {" "}
+          <MoreToolsSidebar currentPage={"/organize-pdf"} />
         </aside>
-             {" "}
       </div>
-            <Footer />   {" "}
+      <Footer />
     </>
   );
 }
+// const pdfjsLib = require("pdfjs-dist/build/pdf") as any;
