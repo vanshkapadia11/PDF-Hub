@@ -324,13 +324,15 @@ export default function CompressImagePage() {
                 variant={"outline"}
                 className="mt-4 ring-2 ring-inset ring-green-500"
               >
-                <a
-                  href={downloadUrl}
-                  download={`compressed-${file.name}`}
-                  className="text-sm font-semibold uppercase"
-                >
-                  Download Compressed Image
-                </a>
+                {file && (
+                  <a
+                    href={downloadUrl}
+                    download={`compressed-${file.name}`}
+                    className="text-sm font-semibold uppercase"
+                  >
+                    Download Compressed Image
+                  </a>
+                )}
               </Button>
             </div>
           )}

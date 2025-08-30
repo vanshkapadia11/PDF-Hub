@@ -129,7 +129,8 @@ export default function EditPDF() {
       const pdfBytes = await pdfDoc.save();
 
       // Create a Blob and a URL for download
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      // const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const blob = new Blob([pdfBytes.buffer], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
     } catch (err: unknown) {
