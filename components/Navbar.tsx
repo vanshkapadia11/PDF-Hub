@@ -65,7 +65,7 @@ const Navbar = () => {
     <section className="flex items-center justify-between py-4 px-4 md:px-10 border-b-2 border-[#e8e8e8] sticky top-0 z-50 bg-white">
       {/* Logo Section */}
       <div className="flex items-center gap-2 text-sm font-semibold uppercase">
-        <Shredder /> PDF Hub
+        <Shredder className="text-rose-400" /> PDF Hub
       </div>
 
       {/* Desktop Navigation */}

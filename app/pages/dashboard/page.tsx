@@ -18,6 +18,12 @@ import {
   Code2,
   LucideKeySquare,
   ClosedCaption,
+  FileSpreadsheet,
+  FileText,
+  FileDown,
+  FilePlus,
+  Text,
+  MoveHorizontal,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -63,36 +69,36 @@ const tools = [
     href: "/compress-pdf",
   },
   {
-    name: "PDF to JPG",
-    description: "Convert each page of your PDF into high-quality JPG images.",
+    name: "PDF to Images",
+    description: "Convert each page of your PDF into high-quality images.",
     icon: (
       <ImageIcon className="h-12 w-12 text-rose-500 group-hover:text-white transition-colors duration-300" />
     ),
-    href: "/pdf-to-jpg",
+    href: "/pdf-to-images",
   },
   {
-    name: "Rotate & Flip Image",
-    description: "Easily rotate or flip your images for perfect orientation.",
+    name: "Images to PDF",
+    description: "Convert a collection of images into a single PDF document.",
+    icon: (
+      <ImageIcon className="h-12 w-12 text-rose-500 group-hover:text-white transition-colors duration-300" />
+    ),
+    href: "/images-to-pdf",
+  },
+  {
+    name: "Rotate PDF Pages",
+    description: "Rotate specific pages or all pages of your PDF document.",
     icon: (
       <RotateCcwIcon className="h-12 w-12 text-rose-500 group-hover:text-white transition-colors duration-300" />
     ),
     href: "/rotate-image",
   },
   {
-    name: "Crop Image",
-    description: "Crop your images to a specific size or aspect ratio.",
+    name: "Crop PDF",
+    description: "Crop PDF pages to a specific size or area.",
     icon: (
       <CropIcon className="h-12 w-12 text-rose-500 group-hover:text-white transition-colors duration-300" />
     ),
     href: "/crop-image",
-  },
-  {
-    name: "OCR PDF",
-    description: "Convert scanned PDFs into searchable and editable text.",
-    icon: (
-      <ScanSearchIcon className="h-12 w-12 text-rose-500 group-hover:text-white transition-colors duration-300" />
-    ),
-    href: "/convert-image",
   },
   {
     name: "PDF Editor",
@@ -101,6 +107,62 @@ const tools = [
       <PencilRulerIcon className="h-12 w-12 text-rose-500 group-hover:text-white transition-colors duration-300" />
     ),
     href: "/edit-pdf",
+  },
+  {
+    name: "Add Page Numbers",
+    description: "Insert page numbers into your PDF document.",
+    icon: (
+      <Text className="h-12 w-12 text-rose-500 group-hover:text-white transition-colors duration-300" />
+    ),
+    href: "/add-number-to-pages",
+  },
+  {
+    name: "Extract PDF Pages",
+    description: "Separate specific pages from your PDF into a new file.",
+    icon: (
+      <FileDown className="h-12 w-12 text-rose-500 group-hover:text-white transition-colors duration-300" />
+    ),
+    href: "/extract-pdf-pages",
+  },
+  {
+    name: "Remove PDF Pages",
+    description: "Delete specific pages from your PDF document.",
+    icon: (
+      <FilePlus className="h-12 w-12 text-rose-500 group-hover:text-white transition-colors duration-300" />
+    ),
+    href: "/remove-pdf-pages",
+  },
+  {
+    name: "Organize PDF",
+    description: "Reorder, delete, and insert pages in your PDF.",
+    icon: (
+      <MoveHorizontal className="h-12 w-12 text-rose-500 group-hover:text-white transition-colors duration-300" />
+    ),
+    href: "/organize-pdf",
+  },
+  {
+    name: "PDF to Excel",
+    description: "Convert tables and data from PDF to a a usable Excel sheet.",
+    icon: (
+      <FileSpreadsheet className="h-12 w-12 text-rose-500 group-hover:text-white transition-colors duration-300" />
+    ),
+    href: "/pdf-to-excel",
+  },
+  {
+    name: "Excel to PDF",
+    description: "Convert your Excel spreadsheets into a PDF document.",
+    icon: (
+      <FileSpreadsheet className="h-12 w-12 text-rose-500 group-hover:text-white transition-colors duration-300" />
+    ),
+    href: "/excel-to-pdf",
+  },
+  {
+    name: "PDF to Word",
+    description: "Convert your PDF document into an editable Word file.",
+    icon: (
+      <FileText className="h-12 w-12 text-rose-500 group-hover:text-white transition-colors duration-300" />
+    ),
+    href: "/pdf-word",
   },
 ];
 
