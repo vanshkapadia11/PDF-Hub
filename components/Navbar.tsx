@@ -100,8 +100,7 @@ const Navbar = () => {
       <div className="hidden md:flex items-center space-x-3">
         <Link href={"/more"}>
           <Button
-            className={`cursor-pointer text-sm font-semibold uppercase ring-2 ring-inset ring-[#e8e8e8]`}
-            variant={"secondary"}
+            className={`cursor-pointer text-sm font-semibold w-full uppercase`}
           >
             All The Tools <CornerDownLeft className="text-green-600" />
           </Button>
@@ -142,8 +141,7 @@ const Navbar = () => {
               <div className="flex flex-col w-full space-y-3">
                 <Link href={"/more"}>
                   <Button
-                    className={`cursor-pointer text-sm font-semibold w-full uppercase ring-2 ring-inset ring-[#e8e8e8]`}
-                    variant={"secondary"}
+                    className={`cursor-pointer text-sm font-semibold w-full uppercase`}
                   >
                     All The Tools <CornerDownLeft className="text-green-600" />
                   </Button>
