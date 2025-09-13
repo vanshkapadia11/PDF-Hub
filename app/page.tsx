@@ -39,8 +39,6 @@
 
 // export default page;
 
-"use client";
-
 import React, { useEffect } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
