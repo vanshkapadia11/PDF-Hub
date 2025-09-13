@@ -221,7 +221,7 @@ export default function ResizeImagePage() {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <Link href={"/pages/resize-image"}>
+                  <Link href={"/resize-image"}>
                     <BreadcrumbPage className="text-sm font-semibold uppercase">
                       Resize Image
                     </BreadcrumbPage>

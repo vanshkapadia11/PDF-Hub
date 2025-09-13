@@ -314,7 +314,7 @@ const LandingPage = () => {
               className="mt-6 text-sm font-semibold uppercase ring-2 ring-inset ring-rose-400 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors duration-300"
               variant={"outline"}
             >
-              <Link href="/pages/merge-pdf">Start with Merge PDF</Link>
+              <Link href="/merge-pdf">Start with Merge PDF</Link>
             </Button>
           </div>
         </main>

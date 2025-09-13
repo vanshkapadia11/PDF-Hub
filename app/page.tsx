@@ -1,6 +1,6 @@
 import Link from "next/link";
 import React from "react";
-import LandingPage from "./dashboard/page";
+import LandingPage from "@/app/dashboard/page";
 
 const page = () => {
   return (
