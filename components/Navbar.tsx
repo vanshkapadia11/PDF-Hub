@@ -10,6 +10,7 @@ import {
   MenuIcon,
   Text,
   Shredder,
+  CornerDownLeft,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -28,31 +29,31 @@ const navLinks = [
   { name: "dashboard", href: "/", icon: HomeIcon, iconColor: "text-rose-400" },
   {
     name: "merge pdf",
-    href: "/pages/merge-pdf",
+    href: "/merge-pdf",
     icon: MergeIcon,
     iconColor: "text-amber-400",
   },
   {
-    name: "make pdf",
-    href: "/pages/images-to-pdf",
+    name: "Images to pdf",
+    href: "/images-to-pdf",
     icon: Edit3Icon,
     iconColor: "text-blue-400",
   },
   {
     name: "resize image",
-    href: "/pages/resize-image",
+    href: "/resize-image",
     icon: ImageIcon,
     iconColor: "text-emerald-400",
   },
   {
     name: "compress Pdf",
-    href: "/pages/compress-pdf",
+    href: "/compress-pdf",
     icon: Text,
     iconColor: "text-cyan-400",
   },
   {
     name: "more",
-    href: "/pages/more",
+    href: "/more",
     icon: MoveDownRightIcon,
     iconColor: "text-indigo-400",
   },
@@ -97,10 +98,14 @@ const Navbar = () => {
 
       {/* Desktop Buttons */}
       <div className="hidden md:flex items-center space-x-3">
-        <Button variant="outline" className="text-sm font-semibold uppercase">
-          Log In
-        </Button>
-        <Button className="text-sm font-semibold uppercase">Sign up</Button>
+        <Link href={"/more"}>
+          <Button
+            className={`cursor-pointer text-sm font-semibold uppercase ring-2 ring-inset ring-[#e8e8e8]`}
+            variant={"secondary"}
+          >
+            All The Tools <CornerDownLeft className="text-green-600" />
+          </Button>
+        </Link>
       </div>
 
       {/* Mobile Menu & Buttons */}
@@ -135,15 +140,14 @@ const Navbar = () => {
               </div>
               <Separator className="my-8" />
               <div className="flex flex-col w-full space-y-3">
-                <Button
-                  variant="outline"
-                  className="w-full text-sm font-semibold uppercase"
-                >
-                  Log In
-                </Button>
-                <Button className="w-full text-sm font-semibold uppercase">
-                  Sign up
-                </Button>
+                <Link href={"/more"}>
+                  <Button
+                    className={`cursor-pointer text-sm font-semibold w-full uppercase ring-2 ring-inset ring-[#e8e8e8]`}
+                    variant={"secondary"}
+                  >
+                    All The Tools <CornerDownLeft className="text-green-600" />
+                  </Button>
+                </Link>
               </div>
             </div>
           </SheetContent>

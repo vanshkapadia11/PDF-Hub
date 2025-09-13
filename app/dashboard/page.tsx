@@ -79,7 +79,7 @@ const tools = [
     href: "/images-to-pdf",
   },
   {
-    name: "Rotate PDF Pages",
+    name: "Rotate Images",
     description: "Rotate specific pages or all pages of your PDF document.",
     icon: (
       <RotateCcwIcon className="h-12 w-12 text-rose-500 group-hover:text-white transition-colors duration-300" />
@@ -276,7 +276,7 @@ const LandingPage = () => {
 
             {/* Main Hero Content */}
             <div className="relative z-10 w-full max-w-4xl text-center">
-              <div className="bg-white/50 backdrop-blur-sm p-8 rounded-xl">
+              <div className="bg-white/50 backdrop-blur-sm md:p-8 p-2 rounded-xl">
                 <h1 className="text-5xl md:text-6xl font-extrabold uppercase leading-tight text-gray-800 tracking-wide drop-shadow-md ">
                   Welcome to <span className="text-rose-500">PDF Hub</span>
                 </h1>
@@ -297,7 +297,7 @@ const LandingPage = () => {
                 name={tool.name}
                 description={tool.description}
                 icon={tool.icon}
-                href={`/pages${tool.href}`} // Fix: Removed extra "/pages" prefix
+                href={`${tool.href}`} // Fix: Removed extra "/pages" prefix
               />
             ))}
           </div>

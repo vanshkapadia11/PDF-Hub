@@ -206,25 +206,37 @@ export default function ImagesToPDFConverter() {
 
           {/* Conditional Rendering based on file and downloadUrl state */}
           {!files.length || downloadUrl ? (
-            <div
-              className={cn(
-                "w-full max-w-2xl h-48 border-2 rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
-                dragActive
-                  ? "border-blue-500 text-blue-500 border-dashed"
-                  : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500 border-dashed"
-              )}
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <p className="text-sm font-semibold uppercase">
-                Click to select or drag & drop images here
-              </p>
-              <p className="text-xs font-semibold uppercase mt-2 text-zinc-600">
-                Accepted formats: JPG, PNG, etc.
-              </p>
-            </div>
+            <>
+              <div
+                className={cn(
+                  "w-full max-w-2xl h-48 border-2 rounded-lg flex flex-col items-center justify-center transition-colors cursor-pointer",
+                  dragActive
+                    ? "border-blue-500 text-blue-500 border-dashed"
+                    : "border-gray-400 text-gray-500 hover:border-blue-500 hover:text-blue-500 border-dashed"
+                )}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <p className="text-sm font-semibold uppercase">
+                  Click to select or drag & drop images here
+                </p>
+                <p className="text-xs font-semibold uppercase mt-2 text-zinc-600">
+                  Accepted formats: JPG, PNG, etc.
+                </p>
+              </div>
+              <div className="">
+                <ins
+                  className="adsbygoogle"
+                  data-ad-client="ca-pub-1234567890123456"
+                  data-ad-slot="1234567890"
+                ></ins>
+                <script>
+                  (adsbygoogle = window.adsbygoogle || []).push({});
+                </script>
+              </div>
+            </>
           ) : (
             <div className="w-full max-w-2xl mt-8 p-6 rounded-xl bg-white shadow-lg border border-gray-200 space-y-6">
               {/* File List */}
