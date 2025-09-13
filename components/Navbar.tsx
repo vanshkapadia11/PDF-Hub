@@ -115,7 +115,7 @@ const Navbar = () => {
           <SheetContent side="right" className="w-full p-8">
             {/* Added a visually hidden title here to resolve the error */}
             <SheetTitle className="flex items-center gap-2 text-sm font-semibold uppercase">
-              <Shredder /> PDF Hub
+              <Shredder className="text-rose-400" /> PDF Hub
             </SheetTitle>
             <div className="flex flex-col items-start pt-8">
               <div className="flex flex-col w-full space-y-2">

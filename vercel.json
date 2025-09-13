@@ -1,0 +1,9 @@
+{
+  "installCommand": "npm install && sudo apt-get update && sudo apt-get install -y poppler-utils",
+  "builds": [
+    {
+      "src": "app/api/pdf-to-images/route.ts",
+      "use": "@vercel/node"
+    }
+  ]
+}

@@ -24,6 +24,8 @@ import {
   FilePlus,
   Text,
   MoveHorizontal,
+  CodeIcon,
+  LucideMove3D,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -67,14 +69,6 @@ const tools = [
       <FireExtinguisher className="h-12 w-12 text-rose-500 group-hover:text-white transition-colors duration-300" />
     ),
     href: "/compress-pdf",
-  },
-  {
-    name: "PDF to Images",
-    description: "Convert each page of your PDF into high-quality images.",
-    icon: (
-      <ImageIcon className="h-12 w-12 text-rose-500 group-hover:text-white transition-colors duration-300" />
-    ),
-    href: "/pdf-to-images",
   },
   {
     name: "Images to PDF",
@@ -206,6 +200,7 @@ const LandingPage = () => {
   return (
     <>
       <Navbar />
+
       <div className="min-h-screen bg-gray-50 bg-dots-pattern">
         <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8">
           {/* Hero Section with Parallax Background */}
@@ -258,13 +253,31 @@ const LandingPage = () => {
                     className="w-24 h-24 text-rose-500"
                   />
                 </FloatingElement>
+                <FloatingElement
+                  depth={5}
+                  className="top-[0%] left-[60%] opacity-10"
+                >
+                  <FloatingIcon
+                    icon={LucideMove3D}
+                    className="w-24 h-24 text-rose-500"
+                  />
+                </FloatingElement>
+                <FloatingElement
+                  depth={5}
+                  className="top-[5%] left-[15%] opacity-10"
+                >
+                  <FloatingIcon
+                    icon={CodeIcon}
+                    className="w-24 h-24 text-rose-500"
+                  />
+                </FloatingElement>
               </Floating>
             </div>
 
             {/* Main Hero Content */}
             <div className="relative z-10 w-full max-w-4xl text-center">
               <div className="bg-white/50 backdrop-blur-sm p-8 rounded-xl">
-                <h1 className="text-5xl md:text-6xl font-extrabold uppercase leading-tight text-gray-800 tracking-wide drop-shadow-md">
+                <h1 className="text-5xl md:text-6xl font-extrabold uppercase leading-tight text-gray-800 tracking-wide drop-shadow-md ">
                   Welcome to <span className="text-rose-500">PDF Hub</span>
                 </h1>
                 <p className="mt-4 text-medium md:text-lg font-medium text-zinc-600 drop-shadow-sm uppercase">
@@ -301,12 +314,13 @@ const LandingPage = () => {
               className="mt-6 text-sm font-semibold uppercase ring-2 ring-inset ring-rose-400 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors duration-300"
               variant={"outline"}
             >
-              <Link href="/merge-pdf">Start with Merge PDF</Link>
+              <Link href="/pages/merge-pdf">Start with Merge PDF</Link>
             </Button>
           </div>
         </main>
       </div>
       <Footer />
+      {/* </div> */}
     </>
   );
 };

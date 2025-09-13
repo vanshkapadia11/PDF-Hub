@@ -200,7 +200,8 @@ export default function SplitPDF() {
             PDF Hub - Split PDF
           </h1>
           <p className="text-xs font-semibold uppercase mt-2 mb-8 text-zinc-600">
-            Split a single PDF into multiple files by page ranges
+            Split a single PDF into multiple files by page ranges | After this
+            you will get a zip file having the page your have selected to split!
           </p>
 
           <input

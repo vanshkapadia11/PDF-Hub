@@ -34,6 +34,7 @@ import {
 import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
 import Footer from "@/components/Footer";
+import Link from "next/link";
 
 // Define a type for the pixelsData state
 interface PixelsData {
@@ -220,9 +221,11 @@ export default function ResizeImagePage() {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbPage className="text-sm font-semibold uppercase">
-                    Resize Image
-                  </BreadcrumbPage>
+                  <Link href={"/pages/resize-image"}>
+                    <BreadcrumbPage className="text-sm font-semibold uppercase">
+                      Resize Image
+                    </BreadcrumbPage>
+                  </Link>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
@@ -268,12 +271,12 @@ export default function ResizeImagePage() {
             </div>
           ) : (
             <div className="w-full max-w-2xl p-6 rounded-xl bg-white shadow-lg border border-gray-200 space-y-4 text-left">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
+              <div className="flex md:flex-row flex-col items-center justify-between">
+                <div className="flex items-center flex-wrap space-x-2">
                   <ImageIcon className="w-5 h-5 text-purple-500" />
-                  <p className="text-sm font-semibold uppercase">
+                  <p className="text-sm font-semibold uppercase line-clamp-2">
                     Selected File:{" "}
-                    <span className="font-normal text-gray-700">
+                    <span className="font-normal text-gray-700 ">
                       {file.name}
                     </span>
                   </p>
@@ -285,10 +288,10 @@ export default function ResizeImagePage() {
                   variant="ghost"
                   size="sm"
                   onClick={removeFile}
-                  className="p-1 h-auto text-red-500 hover:bg-red-50 hover:text-red-700 transition-all rounded-full"
+                  className="text-xs font-semibold uppercase p-2 cursor-pointer mt-2 h-auto text-red-500 hover:bg-red-50 hover:text-red-700 transition-all rounded-full"
                   aria-label="Remove file"
                 >
-                  <XCircleIcon className="h-5 w-5" />
+                  Remove <XCircleIcon className="h-5 w-5" />
                 </Button>
               </div>
               <Separator />

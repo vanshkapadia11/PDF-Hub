@@ -19,6 +19,7 @@ import {
   Image as ImageIcon,
   CircleXIcon,
   Repeat2Icon,
+  DownloadIcon,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import MoreToolsSidebar from "@/components/MoreToolsSidebar";
@@ -231,15 +232,15 @@ export default function ImagesToPDFConverter() {
                 <h4 className="text-lg font-semibold uppercase mb-2">
                   Selected Files ({files.length}):
                 </h4>
-                <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-40 overflow-y-auto pr-2">
+                <ul className="flex gap-2 flex-col my-5 max-h-fit overflow-y-auto pr-2">
                   {files.map((file, index) => (
                     <li
                       key={index}
-                      className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg border border-gray-200"
+                      className="flex items-center justify-between py-2 px-3 ring-2 ring-inset ring-[#e8e8e8] rounded-lg"
                     >
                       <div className="flex items-center space-x-2">
                         <ImageIcon className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm text-gray-700 font-medium truncate">
+                        <span className="text-sm text-gray-700 font-medium line-clamp-2">
                           {file.name}
                         </span>
                       </div>
@@ -247,7 +248,7 @@ export default function ImagesToPDFConverter() {
                         variant="ghost"
                         size="sm"
                         onClick={() => removeFile(file)}
-                        className="p-1 h-auto text-red-500 hover:bg-red-50 hover:text-red-700 transition-all"
+                        className="p-2 cursor-pointer h-auto text-red-500 hover:bg-red-50 hover:text-red-700 transition-all"
                       >
                         <CircleXIcon className="h-5 w-5" />
                       </Button>
@@ -263,7 +264,7 @@ export default function ImagesToPDFConverter() {
                   onClick={handleSubmit}
                   disabled={loading || files.length === 0}
                   variant={"outline"}
-                  className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase"
+                  className="ring-2 ring-inset ring-rose-400 text-sm font-semibold uppercase cursor-pointer"
                 >
                   {loading ? (
                     <>
@@ -297,20 +298,21 @@ export default function ImagesToPDFConverter() {
               <div className="flex justify-center mt-4 md:space-x-4 flex-wrap gap-4">
                 <Button
                   variant={"outline"}
-                  className="ring-2 ring-inset ring-green-500"
+                  className="ring-2 ring-inset ring-green-500 cursor-pointer"
                 >
                   <a
                     href={downloadUrl}
                     download="images-converted.pdf"
-                    className="text-sm font-semibold uppercase"
+                    className="text-sm flex gap-2 items-center font-semibold uppercase"
                   >
+                    <DownloadIcon />
                     Download The PDF
                   </a>
                 </Button>
                 <Button
                   onClick={resetState}
                   variant={"outline"}
-                  className="ring-2 ring-inset ring-gray-400 text-sm font-semibold uppercase"
+                  className="ring-2 ring-inset ring-gray-400 text-sm font-semibold uppercase cursor-pointer"
                 >
                   <Repeat2Icon className="mr-2 h-4 w-4" />
                   Convert another
