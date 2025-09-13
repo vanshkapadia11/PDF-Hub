@@ -232,7 +232,7 @@ const MoreToolsPage = () => {
                     asChild
                     className="mt-4 text-black font-semibold uppercase text-sm group"
                   >
-                    <Link href={`/pages/${tool.href}`}>
+                    <Link href={`/${tool.href}`}>
                       Go to tool
                       <ChevronRightIcon className="h-4 w-4 ml-2 transition-transform duration-200 group-hover:translate-x-1" />
                     </Link>
