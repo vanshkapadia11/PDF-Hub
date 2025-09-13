@@ -97,10 +97,9 @@ const Navbar = () => {
 
       {/* Desktop Buttons */}
       <div className="hidden md:flex items-center space-x-3">
-        <Button variant="outline" className="text-sm font-semibold uppercase">
-          Log In
+        <Button className="text-sm font-semibold uppercase text-red-400">
+          Sign up
         </Button>
-        <Button className="text-sm font-semibold uppercase">Sign up</Button>
       </div>
 
       {/* Mobile Menu & Buttons */}
@@ -135,12 +134,6 @@ const Navbar = () => {
               </div>
               <Separator className="my-8" />
               <div className="flex flex-col w-full space-y-3">
-                <Button
-                  variant="outline"
-                  className="w-full text-sm font-semibold uppercase"
-                >
-                  Log In
-                </Button>
                 <Button className="w-full text-sm font-semibold uppercase">
                   Sign up
                 </Button>
